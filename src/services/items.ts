@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -20,6 +21,19 @@ function itemsCol(groupId: string) {
 export async function listItems(groupId: string): Promise<Item[]> {
   const snap = await getDocs(query(itemsCol(groupId), orderBy('createdAt', 'desc')));
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Item, 'id'>) }));
+}
+
+/** 商品一覧をリアルタイム購読（キャッシュ即時→サーバ同期）。解除関数を返す。 */
+export function watchItems(
+  groupId: string,
+  onData: (items: Item[]) => void,
+  onError?: (e: Error) => void,
+): () => void {
+  return onSnapshot(
+    query(itemsCol(groupId), orderBy('createdAt', 'desc')),
+    (snap) => onData(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Item, 'id'>) }))),
+    (err) => onError?.(err),
+  );
 }
 
 export async function getItem(groupId: string, itemId: string): Promise<Item | null> {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
-import { listItems } from '../services/items';
+import { watchItems } from '../services/items';
 import type { Item } from '../types';
 import { IconSearch, IconPlus, IconItems, IconChevron } from '../components/icons';
 
@@ -11,26 +11,30 @@ export default function ItemList() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [keyword, setKeyword] = useState('');
   const [category, setCategory] = useState('すべて');
-
-  function load(groupId: string) {
-    setLoading(true);
-    setLoadError(false);
-    listItems(groupId)
-      .then(setItems)
-      .catch(() => setLoadError(true))
-      .finally(() => setLoading(false));
-  }
 
   useEffect(() => {
     if (!currentGroup) {
       navigate('/groups');
       return;
     }
-    load(currentGroup.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentGroup, navigate]);
+    setLoading(true);
+    setLoadError(false);
+    const unsub = watchItems(
+      currentGroup.id,
+      (its) => {
+        setItems(its);
+        setLoading(false);
+      },
+      () => {
+        setLoadError(true);
+        setLoading(false);
+      },
+    );
+    return unsub;
+  }, [currentGroup, navigate, reloadKey]);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -87,7 +91,7 @@ export default function ItemList() {
           <button
             className="btn-secondary"
             style={{ maxWidth: 240, margin: '12px auto 0' }}
-            onClick={() => currentGroup && load(currentGroup.id)}
+            onClick={() => setReloadKey((k) => k + 1)}
           >
             再読み込み
           </button>

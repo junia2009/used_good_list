@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
 import {
   deleteShoppingList,
-  getShoppingList,
   updateShoppingList,
+  watchShoppingList,
 } from '../services/shoppingLists';
 import type { ShoppingList } from '../types';
 import { IconBack, IconCheck, IconItems, IconTrash, IconCart } from '../components/icons';
@@ -32,7 +32,9 @@ export default function ShoppingListDetail() {
   const [list, setList] = useState<ShoppingList | null>(null);
 
   useEffect(() => {
-    if (currentGroup && listId) getShoppingList(currentGroup.id, listId).then(setList);
+    if (!currentGroup || !listId) return;
+    // リアルタイム購読：家族の誰かがチェックすると即反映される
+    return watchShoppingList(currentGroup.id, listId, setList);
   }, [currentGroup, listId]);
 
   if (!list || !currentGroup) return <div className="centered">読み込み中…</div>;
@@ -42,7 +44,7 @@ export default function ShoppingListDetail() {
     const items = list.items.map((i) =>
       i.id === itemId ? { ...i, checked: !i.checked } : i,
     );
-    setList({ ...list, items });
+    // 書き込むと購読側に反映される（保留書き込みも即時反映）
     await updateShoppingList(currentGroup.id, list.id, { items });
   }
 
@@ -50,7 +52,6 @@ export default function ShoppingListDetail() {
     if (!currentGroup || !list) return;
     const status = list.status === 'active' ? 'done' : 'active';
     await updateShoppingList(currentGroup.id, list.id, { status });
-    setList({ ...list, status });
   }
 
   async function remove() {

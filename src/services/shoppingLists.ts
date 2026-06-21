@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
@@ -22,12 +23,41 @@ export async function listShoppingLists(groupId: string): Promise<ShoppingList[]
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ShoppingList, 'id'>) }));
 }
 
+/** お使いリスト一覧をリアルタイム購読。解除関数を返す。 */
+export function watchShoppingLists(
+  groupId: string,
+  onData: (lists: ShoppingList[]) => void,
+  onError?: (e: Error) => void,
+): () => void {
+  return onSnapshot(
+    query(listsCol(groupId), orderBy('createdAt', 'desc')),
+    (snap) =>
+      onData(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ShoppingList, 'id'>) }))),
+    (err) => onError?.(err),
+  );
+}
+
 export async function getShoppingList(
   groupId: string,
   listId: string,
 ): Promise<ShoppingList | null> {
   const snap = await getDoc(doc(db, 'groups', groupId, 'shoppingLists', listId));
   return snap.exists() ? { id: snap.id, ...(snap.data() as Omit<ShoppingList, 'id'>) } : null;
+}
+
+/** 1つのお使いリストをリアルタイム購読（店頭でのチェックを家族間で即共有）。 */
+export function watchShoppingList(
+  groupId: string,
+  listId: string,
+  onData: (list: ShoppingList | null) => void,
+  onError?: (e: Error) => void,
+): () => void {
+  return onSnapshot(
+    doc(db, 'groups', groupId, 'shoppingLists', listId),
+    (snap) =>
+      onData(snap.exists() ? { id: snap.id, ...(snap.data() as Omit<ShoppingList, 'id'>) } : null),
+    (err) => onError?.(err),
+  );
 }
 
 export async function createShoppingList(

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroup } from '../contexts/GroupContext';
-import { createShoppingList, listShoppingLists } from '../services/shoppingLists';
+import { createShoppingList, watchShoppingLists } from '../services/shoppingLists';
 import type { ShoppingList } from '../types';
 import { IconPlus, IconCheck, IconCart } from '../components/icons';
 
@@ -13,24 +13,28 @@ export default function ShoppingLists() {
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-
-  function load(groupId: string) {
-    setLoading(true);
-    setLoadError(false);
-    listShoppingLists(groupId)
-      .then(setLists)
-      .catch(() => setLoadError(true))
-      .finally(() => setLoading(false));
-  }
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!currentGroup) {
       navigate('/groups');
       return;
     }
-    load(currentGroup.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentGroup, navigate]);
+    setLoading(true);
+    setLoadError(false);
+    const unsub = watchShoppingLists(
+      currentGroup.id,
+      (ls) => {
+        setLists(ls);
+        setLoading(false);
+      },
+      () => {
+        setLoadError(true);
+        setLoading(false);
+      },
+    );
+    return unsub;
+  }, [currentGroup, navigate, reloadKey]);
 
   async function handleCreate() {
     if (!user || !currentGroup) return;
@@ -51,7 +55,7 @@ export default function ShoppingLists() {
           <button
             className="btn-secondary"
             style={{ maxWidth: 240, margin: '12px auto 0' }}
-            onClick={() => load(currentGroup.id)}
+            onClick={() => setReloadKey((k) => k + 1)}
           >
             再読み込み
           </button>
