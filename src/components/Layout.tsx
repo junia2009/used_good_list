@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { IconItems, IconCart, IconSettings } from './icons';
 
 export default function Layout() {
   return (
@@ -8,15 +9,15 @@ export default function Layout() {
       </main>
       <nav className="bottom-tabs">
         <NavLink to="/items" className="tab">
-          <span className="tab-icon">🧴</span>
+          <IconItems />
           商品
         </NavLink>
         <NavLink to="/lists" className="tab">
-          <span className="tab-icon">🛒</span>
+          <IconCart />
           お使い
         </NavLink>
         <NavLink to="/settings" className="tab">
-          <span className="tab-icon">⚙️</span>
+          <IconSettings />
           設定
         </NavLink>
       </nav>

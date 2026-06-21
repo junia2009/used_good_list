@@ -12,8 +12,8 @@ export default defineConfig({
         name: 'Pacto',
         short_name: 'Pacto',
         description: 'いつものやつを、みんなで共有',
-        theme_color: '#2f6df6',
-        background_color: '#ffffff',
+        theme_color: '#c2703d',
+        background_color: '#fbf8f3',
         display: 'standalone',
         start_url: '/',
         icons: [

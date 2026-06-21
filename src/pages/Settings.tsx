@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGroup } from '../contexts/GroupContext';
 import { createInvite, getMembers } from '../services/groups';
 import type { Member } from '../types';
+import { IconShare, IconCopy, IconSwap, IconLogout } from '../components/icons';
 
 export default function Settings() {
   const { user, logout } = useAuth();
@@ -84,10 +85,10 @@ export default function Settings() {
               <input className="invite-url" readOnly value={inviteUrl} onFocus={(e) => e.target.select()} />
               <div className="invite-actions">
                 <button className="btn-primary" onClick={handleShare}>
-                  共有する
+                  <IconShare /> 共有する
                 </button>
                 <button className="btn-secondary" onClick={handleCopy}>
-                  {copied ? 'コピーしました ✓' : 'リンクをコピー'}
+                  <IconCopy /> {copied ? 'コピーしました' : 'リンクをコピー'}
                 </button>
               </div>
               <p className="muted sm">招待コード: {invite}（手入力でも参加できます）</p>
@@ -98,7 +99,7 @@ export default function Settings() {
 
       <section className="card">
         <button className="btn-secondary" onClick={() => navigate('/groups')}>
-          グループを切り替える
+          <IconSwap /> グループを切り替える
         </button>
         <button
           className="btn-danger"
@@ -107,7 +108,7 @@ export default function Settings() {
             navigate('/login');
           }}
         >
-          ログアウト
+          <IconLogout /> ログアウト
         </button>
       </section>
     </div>

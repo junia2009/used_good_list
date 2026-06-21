@@ -7,11 +7,17 @@ import {
   updateShoppingList,
 } from '../services/shoppingLists';
 import type { ShoppingList } from '../types';
+import { IconBack, IconCheck, IconItems, IconTrash, IconCart } from '../components/icons';
 
-/** 写真サムネ。読み込めない場合は 📦 を表示 */
+/** 写真サムネ。読み込めない場合はアイコンを表示 */
 function Thumb({ url }: { url: string }) {
   const [failed, setFailed] = useState(false);
-  if (!url || failed) return <span className="shop-photo">📦</span>;
+  if (!url || failed)
+    return (
+      <span className="shop-photo">
+        <IconItems />
+      </span>
+    );
   return (
     <span className="shop-photo">
       <img src={url} alt="" onError={() => setFailed(true)} />
@@ -59,9 +65,10 @@ export default function ShoppingListDetail() {
   return (
     <div className="page">
       <header className="form-header">
-        <button className="link" onClick={() => navigate(-1)}>
-          ◀ {list.title}
+        <button className="icon-btn ghost" onClick={() => navigate(-1)} aria-label="戻る">
+          <IconBack />
         </button>
+        <h2>{list.title}</h2>
         <span className="progress">
           {checked}/{list.items.length}
         </span>
@@ -71,7 +78,13 @@ export default function ShoppingListDetail() {
         {list.items.map((it) => (
           <li key={it.id} className={it.checked ? 'checked' : ''}>
             <label>
-              <input type="checkbox" checked={it.checked} onChange={() => toggle(it.id)} />
+              <input
+                type="checkbox"
+                className="visually-hidden"
+                checked={it.checked}
+                onChange={() => toggle(it.id)}
+              />
+              <span className="check">{it.checked && <IconCheck />}</span>
               <Thumb url={it.photoCache} />
               <span className="shop-text">
                 <strong className="shop-name">{it.nameCache || '(名称なし)'}</strong>
@@ -85,7 +98,10 @@ export default function ShoppingListDetail() {
           </li>
         ))}
         {list.items.length === 0 && (
-          <p className="muted">商品詳細の「お使いに追加」から商品を追加できます。</p>
+          <div className="empty">
+            <IconCart />
+            <p>商品詳細の「お使いに追加」から{'\n'}買ってきてほしいものを足しましょう。</p>
+          </div>
         )}
       </ul>
 
@@ -93,7 +109,7 @@ export default function ShoppingListDetail() {
         {list.status === 'active' ? '完了にする' : '再開する'}
       </button>
       <button className="btn-danger" onClick={remove}>
-        削除
+        <IconTrash /> 削除
       </button>
     </div>
   );

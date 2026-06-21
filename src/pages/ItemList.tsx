@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
 import { listItems } from '../services/items';
 import type { Item } from '../types';
+import { IconSearch, IconPlus, IconItems, IconChevron } from '../components/icons';
 
 export default function ItemList() {
   const { currentGroup } = useGroup();
@@ -42,13 +43,20 @@ export default function ItemList() {
   return (
     <div className="page">
       <header className="list-header">
-        <h2>{currentGroup.name}</h2>
-        <input
-          className="search"
-          placeholder="🔍 商品名・メーカーで検索"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-        />
+        <div className="title-row">
+          <h2>{currentGroup.name}</h2>
+          <Link to="/groups" className="icon-btn ghost" aria-label="グループ切替">
+            <IconChevron />
+          </Link>
+        </div>
+        <div className="search-field">
+          <IconSearch />
+          <input
+            placeholder="商品名・メーカーで検索"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+          />
+        </div>
         <div className="chips">
           {categories.map((c) => (
             <button
@@ -65,7 +73,14 @@ export default function ItemList() {
       {loading ? (
         <div className="centered">読み込み中…</div>
       ) : filtered.length === 0 ? (
-        <p className="muted">商品がありません。右下の＋から追加しましょう。</p>
+        <div className="empty">
+          <IconItems />
+          <p>
+            {items.length === 0
+              ? '「いつものやつ」を登録しましょう。\n右下の＋から追加できます。'
+              : '該当する商品がありません。'}
+          </p>
+        </div>
       ) : (
         <div className="item-grid">
           {filtered.map((item) => {
@@ -73,10 +88,13 @@ export default function ItemList() {
             return (
               <Link key={item.id} to={`/items/${item.id}`} className="item-card">
                 <div className="item-photo">
-                  {photo ? <img src={photo.url} alt={item.name} /> : <span>📦</span>}
+                  {photo ? <img src={photo.url} alt={item.name} /> : <IconItems />}
+                  {item.inStock === false && <span className="stock-dot">在庫切れ</span>}
                 </div>
-                <div className="item-name">{item.name}</div>
-                <div className="item-brand">{item.brand}</div>
+                <div className="item-body">
+                  <div className="item-name">{item.name}</div>
+                  <div className="item-brand">{item.brand}</div>
+                </div>
               </Link>
             );
           })}
@@ -84,7 +102,7 @@ export default function ItemList() {
       )}
 
       <button className="fab" onClick={() => navigate('/items/new')} aria-label="商品を追加">
-        ＋
+        <IconPlus />
       </button>
     </div>
   );

@@ -10,6 +10,7 @@ import {
 } from '../services/shoppingLists';
 import { useAuth } from '../contexts/AuthContext';
 import type { Item } from '../types';
+import { IconBack, IconEdit, IconItems, IconCart, IconTrash } from '../components/icons';
 
 export default function ItemDetail() {
   const { itemId } = useParams();
@@ -59,16 +60,20 @@ export default function ItemDetail() {
   return (
     <div className="page">
       <header className="form-header">
-        <button className="link" onClick={() => navigate(-1)}>
-          ◀ 戻る
+        <button className="icon-btn ghost" onClick={() => navigate(-1)} aria-label="戻る">
+          <IconBack />
         </button>
-        <button className="link" onClick={() => navigate(`/items/${item.id}/edit`)}>
-          編集
+        <button
+          className="icon-btn ghost"
+          onClick={() => navigate(`/items/${item.id}/edit`)}
+          aria-label="編集"
+        >
+          <IconEdit />
         </button>
       </header>
 
       <div className="detail-photo">
-        {photo ? <img src={photo.url} alt={item.name} /> : <span>📦</span>}
+        {photo ? <img src={photo.url} alt={item.name} /> : <IconItems />}
       </div>
       {item.photos.length > 1 && (
         <div className="dots">
@@ -77,33 +82,35 @@ export default function ItemDetail() {
               key={i}
               className={`dot ${i === active ? 'dot-active' : ''}`}
               onClick={() => setActive(i)}
+              aria-label={`写真 ${i + 1}`}
             />
           ))}
         </div>
       )}
 
-      <h2>{item.name}</h2>
+      <h2 className="detail-title">{item.name}</h2>
+      <p className="detail-brand">{item.brand}</p>
       <dl className="meta">
-        <dt>メーカー</dt>
-        <dd>{item.brand}</dd>
         {item.category && (<><dt>カテゴリ</dt><dd>{item.category}</dd></>)}
-        {item.size && (<><dt>容量</dt><dd>{item.size}</dd></>)}
+        {item.size && (<><dt>容量・規格</dt><dd>{item.size}</dd></>)}
         {item.store && (<><dt>購入場所</dt><dd>{item.store}</dd></>)}
         {item.note && (<><dt>メモ</dt><dd>{item.note}</dd></>)}
         <dt>在庫</dt>
-        <dd>{item.inStock ? 'あり' : '切れ'}</dd>
+        <dd>{item.inStock === false ? '切れ' : 'あり'}</dd>
       </dl>
 
-      <button className="btn-primary" onClick={addToShopping}>
-        🛒 お使いに追加
-      </button>
-      <button className="btn-secondary" onClick={toggleStock}>
-        {item.inStock ? '在庫切れにする' : '在庫ありにする'}
-      </button>
-      <button className="btn-danger" onClick={handleDelete}>
-        削除
-      </button>
-      {msg && <p className="success">{msg}</p>}
+      <div className="detail-actions">
+        <button className="btn-primary" onClick={addToShopping}>
+          <IconCart /> お使いに追加
+        </button>
+        <button className="btn-secondary" onClick={toggleStock}>
+          {item.inStock === false ? '在庫ありに戻す' : '在庫切れにする'}
+        </button>
+        <button className="btn-danger" onClick={handleDelete}>
+          <IconTrash /> 削除
+        </button>
+        {msg && <p className="success">{msg}</p>}
+      </div>
     </div>
   );
 }

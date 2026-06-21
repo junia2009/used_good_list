@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useGroup } from '../contexts/GroupContext';
 import { createShoppingList, listShoppingLists } from '../services/shoppingLists';
 import type { ShoppingList } from '../types';
+import { IconPlus, IconCheck, IconCart } from '../components/icons';
 
 export default function ShoppingLists() {
   const { user } = useAuth();
@@ -47,7 +48,7 @@ export default function ShoppingLists() {
         {active.map((l) => (
           <li key={l.id}>
             <Link to={`/lists/${l.id}`} className="row-btn">
-              ● {l.title}
+              <span className="list-title">{l.title}</span>
               <span className="progress">{progress(l)}</span>
             </Link>
           </li>
@@ -55,14 +56,22 @@ export default function ShoppingLists() {
         {done.map((l) => (
           <li key={l.id}>
             <Link to={`/lists/${l.id}`} className="row-btn done">
-              ✓ {l.title}（完了）
+              <span className="list-title">
+                <IconCheck className="done-check" /> {l.title}
+              </span>
+              <span className="muted sm">完了</span>
             </Link>
           </li>
         ))}
-        {lists.length === 0 && <p className="muted">お使いリストはまだありません。</p>}
+        {lists.length === 0 && (
+          <div className="empty">
+            <IconCart />
+            <p>お使いリストはまだありません。{'\n'}右下の＋から作成できます。</p>
+          </div>
+        )}
       </ul>
       <button className="fab" onClick={handleCreate} aria-label="リストを作成">
-        ＋
+        <IconPlus />
       </button>
     </div>
   );

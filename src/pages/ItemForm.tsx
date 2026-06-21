@@ -11,6 +11,7 @@ import {
 } from '../services/items';
 import { uploadItemPhoto } from '../services/storage';
 import type { Photo } from '../types';
+import { IconClose, IconCamera } from '../components/icons';
 
 const CATEGORIES = ['洗剤', '食品', '日用品', '飲料', '調味料', 'その他'];
 
@@ -90,8 +91,8 @@ export default function ItemForm() {
   return (
     <div className="page">
       <header className="form-header">
-        <button className="link" onClick={() => navigate(-1)}>
-          ✕ キャンセル
+        <button className="icon-btn ghost" onClick={() => navigate(-1)} aria-label="キャンセル">
+          <IconClose />
         </button>
         <h2>{isEdit ? '商品を編集' : '商品を登録'}</h2>
         <button className="btn-primary sm" disabled={busy} onClick={handleSave}>
@@ -107,7 +108,8 @@ export default function ItemForm() {
           <img key={i} className="thumb" src={URL.createObjectURL(f)} alt="" />
         ))}
         <label className="photo-add">
-          📷
+          <IconCamera />
+          写真を追加
           <input
             type="file"
             accept="image/*"
@@ -119,12 +121,12 @@ export default function ItemForm() {
       </div>
 
       <label className="field">
-        商品名 *
-        <input value={form.name} onChange={(e) => set('name', e.target.value)} />
+        商品名<span className="req">必須</span>
+        <input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="例：おしゃれ着用洗剤 エマール" />
       </label>
       <label className="field">
-        メーカー *
-        <input value={form.brand} onChange={(e) => set('brand', e.target.value)} />
+        メーカー<span className="req">必須</span>
+        <input value={form.brand} onChange={(e) => set('brand', e.target.value)} placeholder="例：花王" />
       </label>
       <label className="field">
         カテゴリ

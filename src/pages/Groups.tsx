@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroup } from '../contexts/GroupContext';
 import { createGroup, joinGroup } from '../services/groups';
+import { IconHome, IconChevron } from '../components/icons';
 
 export default function Groups() {
   const { user } = useAuth();
@@ -58,8 +59,12 @@ export default function Groups() {
         {groups.map((g) => (
           <li key={g.id}>
             <button className="row-btn" onClick={() => open(g.id)}>
-              🏠 {g.name}
-              <span className="chevron">▶</span>
+              <span className="list-title">
+                <IconHome className="row-lead" /> {g.name}
+              </span>
+              <span className="chevron">
+                <IconChevron />
+              </span>
             </button>
           </li>
         ))}
