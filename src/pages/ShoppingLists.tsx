@@ -12,15 +12,24 @@ export default function ShoppingLists() {
   const navigate = useNavigate();
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  function load(groupId: string) {
+    setLoading(true);
+    setLoadError(false);
+    listShoppingLists(groupId)
+      .then(setLists)
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  }
 
   useEffect(() => {
     if (!currentGroup) {
       navigate('/groups');
       return;
     }
-    listShoppingLists(currentGroup.id)
-      .then(setLists)
-      .finally(() => setLoading(false));
+    load(currentGroup.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGroup, navigate]);
 
   async function handleCreate() {
@@ -32,6 +41,23 @@ export default function ShoppingLists() {
 
   if (!currentGroup) return null;
   if (loading) return <div className="centered">読み込み中…</div>;
+  if (loadError)
+    return (
+      <div className="page">
+        <h2>お使いリスト</h2>
+        <div className="empty">
+          <IconCart />
+          <p>読み込みに失敗しました。{'\n'}電波の良い場所でお試しください。</p>
+          <button
+            className="btn-secondary"
+            style={{ maxWidth: 240, margin: '12px auto 0' }}
+            onClick={() => load(currentGroup.id)}
+          >
+            再読み込み
+          </button>
+        </div>
+      </div>
+    );
 
   const active = lists.filter((l) => l.status === 'active');
   const done = lists.filter((l) => l.status === 'done');
