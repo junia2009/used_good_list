@@ -8,6 +8,17 @@ import {
 } from '../services/shoppingLists';
 import type { ShoppingList } from '../types';
 
+/** 写真サムネ。読み込めない場合は 📦 を表示 */
+function Thumb({ url }: { url: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!url || failed) return <span className="shop-photo">📦</span>;
+  return (
+    <span className="shop-photo">
+      <img src={url} alt="" onError={() => setFailed(true)} />
+    </span>
+  );
+}
+
 export default function ShoppingListDetail() {
   const { listId } = useParams();
   const { currentGroup } = useGroup();
@@ -61,11 +72,13 @@ export default function ShoppingListDetail() {
           <li key={it.id} className={it.checked ? 'checked' : ''}>
             <label>
               <input type="checkbox" checked={it.checked} onChange={() => toggle(it.id)} />
-              <span className="shop-photo">
-                {it.photoCache ? <img src={it.photoCache} alt="" /> : '📦'}
-              </span>
+              <Thumb url={it.photoCache} />
               <span className="shop-text">
-                <strong>{it.nameCache}</strong> {it.brandCache} ×{it.quantity}
+                <strong className="shop-name">{it.nameCache || '(名称なし)'}</strong>
+                <span className="shop-sub">
+                  {it.brandCache}
+                  {it.quantity ? ` ・ ${it.quantity}個` : ''}
+                </span>
                 {it.note && <em>メモ: {it.note}</em>}
               </span>
             </label>
