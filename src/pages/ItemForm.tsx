@@ -111,7 +111,6 @@ export default function ItemForm() {
           <input
             type="file"
             accept="image/*"
-            capture="environment"
             multiple
             hidden
             onChange={(e) => setFiles([...files, ...Array.from(e.target.files ?? [])])}
