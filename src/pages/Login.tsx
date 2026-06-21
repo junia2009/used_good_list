@@ -18,19 +18,22 @@ export default function Login() {
 
   return (
     <div className="login-screen">
-      <svg className="brand-mark" viewBox="0 0 64 64" aria-hidden>
-        <rect width="64" height="64" rx="18" fill="#c2703d" />
-        <text
-          x="32"
-          y="45"
-          textAnchor="middle"
-          fontSize="36"
-          fontFamily="Georgia, 'Times New Roman', serif"
-          fontWeight="600"
-          fill="#fffdfa"
-        >
-          P
-        </text>
+      <svg className="brand-mark" viewBox="0 0 512 512" aria-hidden>
+        <rect width="512" height="512" rx="112" fill="#c2703d" />
+        <path
+          d="M150 232 L362 232 L392 372 Q397 400 369 400 L143 400 Q115 400 120 372 Z"
+          fill="#f7ece0"
+        />
+        <path
+          d="M196 232 V184 a60 60 0 0 1 120 0 V232"
+          fill="none"
+          stroke="#f7ece0"
+          strokeWidth="30"
+          strokeLinecap="round"
+        />
+        <path d="M256 296 c0 30 -20 50 -52 52 c0 -30 20 -50 52 -52 Z" fill="#6e7256" />
+        <path d="M256 296 c0 30 20 50 52 52 c0 -30 -20 -50 -52 -52 Z" fill="#6e7256" />
+        <path d="M256 290 v72" stroke="#6e7256" strokeWidth="11" strokeLinecap="round" />
       </svg>
       <h1 className="brand">Pacto</h1>
       <p className="tagline">いつものやつを、ふたりで。</p>
