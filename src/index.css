@@ -245,3 +245,8 @@ input, select, textarea {
 .member-list li { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
 .badge { font-size: 11px; background: #eef2ff; color: var(--primary); padding: 2px 6px; border-radius: 6px; }
 .invite-code { background: #f0f1f4; padding: 10px; border-radius: 8px; }
+.invite-box { margin-top: 12px; }
+.invite-url { background: #f0f1f4; font-size: 13px; margin: 6px 0; }
+.invite-actions { display: flex; gap: 8px; }
+.invite-actions .btn-primary, .invite-actions .btn-secondary { margin-top: 4px; }
+.muted.sm { font-size: 12px; margin-top: 8px; }

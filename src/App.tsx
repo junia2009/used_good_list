@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Groups from './pages/Groups';
+import Join from './pages/Join';
 import ItemList from './pages/ItemList';
 import ItemDetail from './pages/ItemDetail';
 import ItemForm from './pages/ItemForm';
@@ -38,6 +39,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/join" element={<Join />} />
 
       <Route
         path="/groups"

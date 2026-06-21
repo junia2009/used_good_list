@@ -11,15 +11,42 @@ export default function Settings() {
   const navigate = useNavigate();
   const [members, setMembers] = useState<Member[]>([]);
   const [invite, setInvite] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (currentGroup) getMembers(currentGroup.id).then(setMembers);
   }, [currentGroup]);
 
+  const inviteUrl = invite ? `${window.location.origin}/join?code=${invite}` : '';
+
   async function handleInvite() {
     if (!user || !currentGroup) return;
+    setCopied(false);
     const code = await createInvite(currentGroup.id, user.uid);
     setInvite(code);
+  }
+
+  async function handleShare() {
+    if (!currentGroup) return;
+    const text = `「${currentGroup.name}」に招待します。このリンクから参加してね:`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Pacto への招待', text, url: inviteUrl });
+        return;
+      } catch {
+        /* キャンセル時は何もしない */
+      }
+    }
+    await handleCopy();
+  }
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
   }
 
   return (
@@ -49,12 +76,22 @@ export default function Settings() {
             ))}
           </ul>
           <button className="btn-secondary" onClick={handleInvite}>
-            招待コードを作る
+            招待リンクを作る
           </button>
           {invite && (
-            <p className="invite-code">
-              招待コード: <strong>{invite}</strong>（7日間有効）
-            </p>
+            <div className="invite-box">
+              <p className="muted">このリンクを家族に送ってください（7日間有効）</p>
+              <input className="invite-url" readOnly value={inviteUrl} onFocus={(e) => e.target.select()} />
+              <div className="invite-actions">
+                <button className="btn-primary" onClick={handleShare}>
+                  共有する
+                </button>
+                <button className="btn-secondary" onClick={handleCopy}>
+                  {copied ? 'コピーしました ✓' : 'リンクをコピー'}
+                </button>
+              </div>
+              <p className="muted sm">招待コード: {invite}（手入力でも参加できます）</p>
+            </div>
           )}
         </section>
       )}
