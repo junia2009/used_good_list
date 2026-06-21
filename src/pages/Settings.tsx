@@ -111,6 +111,12 @@ export default function Settings() {
           <IconLogout /> ログアウト
         </button>
       </section>
+
+      <p className="version">
+        Pacto v{__APP_VERSION__}
+        <br />
+        {__APP_BUILD_DATE__} ・ {__APP_COMMIT__}
+      </p>
     </div>
   );
 }

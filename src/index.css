@@ -934,3 +934,11 @@ textarea {
 .invite-actions .btn-secondary {
   margin-top: 4px;
 }
+
+.version {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 24px 0 8px;
+}
