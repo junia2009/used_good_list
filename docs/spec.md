@@ -1,4 +1,7 @@
-# いつものやつ（仮称）— 仕様書 v0.1
+# Pacto — 仕様書 v0.1
+
+> アプリ名「Pacto」: package（パッケージ）＋ pact（約束）。
+> 「いつものやつ」のパッケージを記録し、家族との"買い物の約束"を守るためのアプリ。
 
 > 普段使っている商品のパッケージ写真を家族・グループで共有し、お使いのときに
 > 「いつものやつ」を正確に買ってきてもらうためのアプリ。
@@ -105,16 +108,16 @@ ShoppingListItem
 
 Web/PWA × クラウド同期を前提とした構成案。
 
-| 層 | 候補 | 補足 |
+**バックエンドは Firebase に確定。**
+
+| 層 | 採用 | 補足 |
 |---|---|---|
 | フロント | React + Vite（PWA対応） | TypeScript。インストール不要で試せる。 |
-| 認証 | Firebase Auth または Supabase Auth | Google ログイン等 |
-| DB | Firestore または Supabase(Postgres) | リアルタイム同期が容易 |
-| 画像保存 | Cloud Storage / Supabase Storage | アップロード時にリサイズ |
-| ホスティング | Firebase Hosting / Vercel | |
-
-> 認証・DB・ストレージ・リアルタイム同期が一体な **Firebase** か **Supabase** の
-> どちらかを推奨。次の設計フェーズで確定する。
+| 認証 | Firebase Authentication（**Google ログインのみ**） | メール/パスワードは当面持たない |
+| DB | Cloud Firestore | グループ単位のリアルタイム同期 |
+| 画像保存 | Cloud Storage for Firebase | アップロード時にリサイズ・サムネイル生成 |
+| ホスティング | Firebase Hosting | PWA配信 |
+| セキュリティ | Firestore / Storage セキュリティルール | グループメンバー以外のアクセスを禁止 |
 
 ## 8. 非機能要件
 
@@ -132,8 +135,10 @@ Web/PWA × クラウド同期を前提とした構成案。
 
 ## 10. 未決事項
 
-- バックエンド基盤の確定（Firebase か Supabase か）
-- 認証方式（メール/パスワード、ソーシャルログインの範囲）
-- アプリ名の正式名称
 - お使いリストの「担当者」通知（プッシュ通知の要否）
+
+### 決定済み
+- アプリ名: **Pacto**
+- バックエンド基盤: **Firebase**（Auth / Firestore / Cloud Storage / Hosting）
+- 認証方式: **Google ログインのみ**
 ```
