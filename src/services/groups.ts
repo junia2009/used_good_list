@@ -1,32 +1,42 @@
 import {
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
-  collectionGroup,
   deleteDoc,
   doc,
   getDoc,
   getDocs,
-  query,
   serverTimestamp,
   setDoc,
   Timestamp,
-  where,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Group, Invite, Member } from '../types';
 import type { User } from 'firebase/auth';
 
-/** ログインユーザーが所属するグループ一覧を取得（members のコレクショングループクエリ） */
+/**
+ * ログインユーザーが所属するグループ一覧を取得。
+ * users/{uid}.groupIds を参照する方式（コレクショングループ用インデックス不要）。
+ */
 export async function getMyGroups(uid: string): Promise<Group[]> {
-  const snap = await getDocs(query(collectionGroup(db, 'members'), where('uid', '==', uid)));
+  const userSnap = await getDoc(doc(db, 'users', uid));
+  const groupIds: string[] = (userSnap.exists() && userSnap.data().groupIds) || [];
   const groups: Group[] = [];
-  for (const m of snap.docs) {
-    const groupRef = m.ref.parent.parent; // groups/{groupId}
-    if (!groupRef) continue;
-    const g = await getDoc(groupRef);
+  for (const gid of groupIds) {
+    const g = await getDoc(doc(db, 'groups', gid));
     if (g.exists()) groups.push({ id: g.id, ...(g.data() as Omit<Group, 'id'>) });
   }
   return groups;
+}
+
+/** ユーザー文書の groupIds に追加/削除（所属グループの索引） */
+async function setUserGroupMembership(uid: string, groupId: string, joined: boolean) {
+  await setDoc(
+    doc(db, 'users', uid),
+    { groupIds: joined ? arrayUnion(groupId) : arrayRemove(groupId) },
+    { merge: true },
+  );
 }
 
 /** グループを作成し、オーナー自身を members に登録 */
@@ -43,6 +53,7 @@ export async function createGroup(user: User, name: string): Promise<string> {
     photoURL: user.photoURL ?? '',
     joinedAt: serverTimestamp(),
   });
+  await setUserGroupMembership(user.uid, groupRef.id, true);
   return groupRef.id;
 }
 
@@ -83,9 +94,11 @@ export async function joinGroup(code: string, user: User): Promise<string> {
     inviteCode: code,
     joinedAt: serverTimestamp(),
   });
+  await setUserGroupMembership(user.uid, invite.groupId, true);
   return invite.groupId;
 }
 
 export async function leaveGroup(groupId: string, uid: string): Promise<void> {
   await deleteDoc(doc(db, 'groups', groupId, 'members', uid));
+  await setUserGroupMembership(uid, groupId, false);
 }

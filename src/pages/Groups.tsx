@@ -6,7 +6,7 @@ import { createGroup, joinGroup } from '../services/groups';
 
 export default function Groups() {
   const { user } = useAuth();
-  const { groups, loading, selectGroup, refreshGroups } = useGroup();
+  const { groups, loading, error: loadError, selectGroup, refreshGroups } = useGroup();
   const navigate = useNavigate();
   const [newName, setNewName] = useState('');
   const [code, setCode] = useState('');
@@ -53,6 +53,7 @@ export default function Groups() {
   return (
     <div className="page">
       <h2>グループを選ぶ</h2>
+      {loadError && <p className="error">読み込みエラー: {loadError}</p>}
       <ul className="group-list">
         {groups.map((g) => (
           <li key={g.id}>

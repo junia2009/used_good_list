@@ -7,6 +7,7 @@ interface GroupContextValue {
   groups: Group[];
   currentGroup: Group | null;
   loading: boolean;
+  error: string;
   selectGroup: (groupId: string) => void;
   refreshGroups: () => Promise<void>;
 }
@@ -22,6 +23,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
     () => localStorage.getItem(STORAGE_KEY),
   );
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   async function refreshGroups() {
     if (!user) {
@@ -30,9 +32,16 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       return;
     }
     setLoading(true);
-    const gs = await getMyGroups(user.uid);
-    setGroups(gs);
-    setLoading(false);
+    setError('');
+    try {
+      const gs = await getMyGroups(user.uid);
+      setGroups(gs);
+    } catch (e) {
+      console.error('グループの取得に失敗', e);
+      setError(e instanceof Error ? e.message : 'グループの取得に失敗しました');
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -50,7 +59,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
 
   return (
     <GroupContext.Provider
-      value={{ groups, currentGroup, loading, selectGroup, refreshGroups }}
+      value={{ groups, currentGroup, loading, error, selectGroup, refreshGroups }}
     >
       {children}
     </GroupContext.Provider>
