@@ -10,18 +10,26 @@ export default function ItemList() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [category, setCategory] = useState('すべて');
+
+  function load(groupId: string) {
+    setLoading(true);
+    setLoadError(false);
+    listItems(groupId)
+      .then(setItems)
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  }
 
   useEffect(() => {
     if (!currentGroup) {
       navigate('/groups');
       return;
     }
-    setLoading(true);
-    listItems(currentGroup.id)
-      .then(setItems)
-      .finally(() => setLoading(false));
+    load(currentGroup.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentGroup, navigate]);
 
   const categories = useMemo(() => {
@@ -72,6 +80,18 @@ export default function ItemList() {
 
       {loading ? (
         <div className="centered">読み込み中…</div>
+      ) : loadError ? (
+        <div className="empty">
+          <IconItems />
+          <p>読み込みに失敗しました。{'\n'}電波の良い場所でお試しください。</p>
+          <button
+            className="btn-secondary"
+            style={{ maxWidth: 240, margin: '12px auto 0' }}
+            onClick={() => currentGroup && load(currentGroup.id)}
+          >
+            再読み込み
+          </button>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="empty">
           <IconItems />
