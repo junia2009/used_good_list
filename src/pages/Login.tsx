@@ -36,7 +36,7 @@ export default function Login() {
         <path d="M256 290 v72" stroke="#6e7256" strokeWidth="11" strokeLinecap="round" />
       </svg>
       <h1 className="brand">Pacto</h1>
-      <p className="tagline">いつものやつを、ふたりで。</p>
+      <p className="tagline">いつものやつを、家族みんなで。</p>
       <button className="btn-primary" onClick={handleLogin}>
         Google でログイン
       </button>
