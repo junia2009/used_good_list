@@ -325,9 +325,12 @@ textarea {
   color: var(--text-2);
 }
 .btn-primary svg,
-.btn-secondary svg {
+.btn-secondary svg,
+.btn-danger svg,
+.btn-ghost svg {
   width: 18px;
   height: 18px;
+  flex: 0 0 auto;
 }
 .btn-primary.sm {
   width: auto;
