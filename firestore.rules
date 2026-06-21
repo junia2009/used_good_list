@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isMember(groupId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+    }
+
+    // 自分のユーザー文書のみ読み書き可
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // 招待コード：ログイン済みなら読める。作成はそのグループのメンバーのみ
+    match /invites/{code} {
+      allow read: if isSignedIn();
+      allow create: if isMember(request.resource.data.groupId);
+      allow delete: if isMember(resource.data.groupId);
+    }
+
+    match /groups/{groupId} {
+      allow read: if isMember(groupId);
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isMember(groupId);
+
+      // メンバー
+      match /members/{uid} {
+        allow read: if isMember(groupId);
+
+        // オーナーがグループ作成直後に自分を登録（招待コード不要）
+        allow create: if isSignedIn()
+          && request.auth.uid == uid
+          && get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid;
+
+        // 招待コード経由の参加（本人＋有効な招待コード）
+        allow create: if isSignedIn()
+          && request.auth.uid == uid
+          && exists(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode))
+          && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.groupId == groupId;
+
+        // 自分で退会
+        allow delete: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      // 商品・お使いリスト：グループメンバーのみ
+      match /items/{itemId} {
+        allow read, write: if isMember(groupId);
+      }
+      match /shoppingLists/{listId} {
+        allow read, write: if isMember(groupId);
+      }
+    }
+  }
+}
