@@ -7,7 +7,7 @@ import {
   watchShoppingList,
 } from '../services/shoppingLists';
 import type { ShoppingList } from '../types';
-import { IconBack, IconCheck, IconItems, IconTrash, IconCart } from '../components/icons';
+import { IconBack, IconCheck, IconTrash, IconCart, PhotoPlaceholder } from '../components/icons';
 
 /** 写真サムネ。読み込めない場合はアイコンを表示 */
 function Thumb({ url }: { url: string }) {
@@ -15,7 +15,7 @@ function Thumb({ url }: { url: string }) {
   if (!url || failed)
     return (
       <span className="shop-photo">
-        <IconItems />
+        <PhotoPlaceholder />
       </span>
     );
   return (

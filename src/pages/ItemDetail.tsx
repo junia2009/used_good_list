@@ -10,7 +10,7 @@ import {
 } from '../services/shoppingLists';
 import { useAuth } from '../contexts/AuthContext';
 import type { Item } from '../types';
-import { IconBack, IconEdit, IconItems, IconCart, IconTrash } from '../components/icons';
+import { IconBack, IconEdit, IconCart, IconTrash, PhotoPlaceholder } from '../components/icons';
 
 export default function ItemDetail() {
   const { itemId } = useParams();
@@ -73,7 +73,7 @@ export default function ItemDetail() {
       </header>
 
       <div className="detail-photo">
-        {photo ? <img src={photo.url} alt={item.name} /> : <IconItems />}
+        {photo ? <img src={photo.url} alt={item.name} /> : <PhotoPlaceholder />}
       </div>
       {item.photos.length > 1 && (
         <div className="dots">
