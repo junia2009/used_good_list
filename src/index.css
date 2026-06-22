@@ -789,6 +789,11 @@ textarea {
   width: 22px;
   height: 22px;
 }
+.photo-hint {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
 .field {
   display: block;
   margin-top: 16px;
