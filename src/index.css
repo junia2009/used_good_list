@@ -528,6 +528,12 @@ textarea {
   border-color: var(--primary);
 }
 
+.reorder-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
 .item-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

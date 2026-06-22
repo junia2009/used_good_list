@@ -43,6 +43,7 @@ export interface Item {
   jan?: string;
   photos: Photo[];
   inStock?: boolean;
+  order?: number;
   createdBy: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;

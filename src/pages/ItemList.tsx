@@ -1,9 +1,71 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useGroup } from '../contexts/GroupContext';
-import { watchItems } from '../services/items';
+import { reorderItems, sortItemsByOrder, watchItems } from '../services/items';
 import type { Item } from '../types';
 import { IconSearch, IconPlus, IconItems, IconChevron, PhotoPlaceholder } from '../components/icons';
+
+/** カード中身（一覧・ドラッグ中で共通） */
+function CardBody({ item }: { item: Item }) {
+  const photo = item.photos.find((p) => p.isPrimary) ?? item.photos[0];
+  return (
+    <>
+      <div className="item-photo">
+        {photo ? <img src={photo.url} alt={item.name} /> : <PhotoPlaceholder />}
+        {item.inStock === false && <span className="stock-dot">在庫切れ</span>}
+      </div>
+      <div className="item-body">
+        <div className="item-name">{item.name}</div>
+        <div className="item-brand">{item.brand}</div>
+      </div>
+    </>
+  );
+}
+
+/** 長押しで並び替えできるカード。タップ（ドラッグせず）で詳細へ遷移 */
+function SortableCard({ item }: { item: Item }) {
+  const navigate = useNavigate();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 2 : undefined,
+    touchAction: 'manipulation' as const,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="item-card"
+      onClick={() => navigate(`/items/${item.id}`)}
+      {...attributes}
+      {...listeners}
+    >
+      <CardBody item={item} />
+    </div>
+  );
+}
 
 export default function ItemList() {
   const { currentGroup } = useGroup();
@@ -15,6 +77,14 @@ export default function ItemList() {
   const [keyword, setKeyword] = useState('');
   const [category, setCategory] = useState('すべて');
 
+  const sensors = useSensors(
+    // マウスは少し動かしてからドラッグ開始（クリックと区別）
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    // タッチは長押し（200ms）でドラッグ開始。スクロールは許容
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
   useEffect(() => {
     if (!currentGroup) {
       navigate('/groups');
@@ -25,7 +95,7 @@ export default function ItemList() {
     const unsub = watchItems(
       currentGroup.id,
       (its) => {
-        setItems(its);
+        setItems(sortItemsByOrder(its));
         setLoading(false);
       },
       () => {
@@ -49,6 +119,24 @@ export default function ItemList() {
       !kw || i.name.toLowerCase().includes(kw) || i.brand.toLowerCase().includes(kw);
     return matchCat && matchKw;
   });
+
+  // 絞り込み中は並び替えを無効化（表示順と全体順がずれるため）
+  const reorderable = category === 'すべて' && keyword.trim() === '';
+
+  function handleDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!currentGroup || !over || active.id === over.id) return;
+    const oldIndex = items.findIndex((i) => i.id === active.id);
+    const newIndex = items.findIndex((i) => i.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const next = arrayMove(items, oldIndex, newIndex);
+    setItems(next); // 楽観的更新
+    // 失敗時はリアルタイム購読が元の順序へ戻す
+    reorderItems(
+      currentGroup.id,
+      next.map((i) => i.id),
+    ).catch(() => undefined);
+  }
 
   if (!currentGroup) return null;
 
@@ -105,23 +193,26 @@ export default function ItemList() {
               : '該当する商品がありません。'}
           </p>
         </div>
+      ) : reorderable ? (
+        <>
+          {items.length > 1 && <p className="reorder-hint">長押しで並び替えできます</p>}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={filtered.map((i) => i.id)} strategy={rectSortingStrategy}>
+              <div className="item-grid">
+                {filtered.map((item) => (
+                  <SortableCard key={item.id} item={item} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </>
       ) : (
         <div className="item-grid">
-          {filtered.map((item) => {
-            const photo = item.photos.find((p) => p.isPrimary) ?? item.photos[0];
-            return (
-              <Link key={item.id} to={`/items/${item.id}`} className="item-card">
-                <div className="item-photo">
-                  {photo ? <img src={photo.url} alt={item.name} /> : <PhotoPlaceholder />}
-                  {item.inStock === false && <span className="stock-dot">在庫切れ</span>}
-                </div>
-                <div className="item-body">
-                  <div className="item-name">{item.name}</div>
-                  <div className="item-brand">{item.brand}</div>
-                </div>
-              </Link>
-            );
-          })}
+          {filtered.map((item) => (
+            <Link key={item.id} to={`/items/${item.id}`} className="item-card">
+              <CardBody item={item} />
+            </Link>
+          ))}
         </div>
       )}
 
