@@ -73,10 +73,6 @@ export default function ItemForm() {
       setError('商品名とメーカーは必須です');
       return;
     }
-    if (!isEdit && files.length === 0) {
-      setError('写真を1枚以上追加してください');
-      return;
-    }
     setBusy(true);
     setError('');
     try {
@@ -165,6 +161,7 @@ export default function ItemForm() {
           />
         </label>
       </div>
+      <p className="photo-hint">写真は任意です。あとから追加・変更できます。</p>
 
       <label className="field">
         商品名<span className="req">必須</span>
