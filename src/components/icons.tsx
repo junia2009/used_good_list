@@ -151,6 +151,17 @@ export function IconLogout({ className }: IconProps) {
   );
 }
 
+export function PhotoPlaceholder({ className }: IconProps) {
+  // 写真未設定時に表示するデフォルトの絵（額縁＋山と太陽）
+  return (
+    <svg {...base} className={className}>
+      <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path d="M4 16.5l4.5-4.5 3 3 3.5-4 5 5.5" />
+    </svg>
+  );
+}
+
 export function IconSwap({ className }: IconProps) {
   return (
     <svg {...base} className={className}>

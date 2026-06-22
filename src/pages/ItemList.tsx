@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
 import { watchItems } from '../services/items';
 import type { Item } from '../types';
-import { IconSearch, IconPlus, IconItems, IconChevron } from '../components/icons';
+import { IconSearch, IconPlus, IconItems, IconChevron, PhotoPlaceholder } from '../components/icons';
 
 export default function ItemList() {
   const { currentGroup } = useGroup();
@@ -112,7 +112,7 @@ export default function ItemList() {
             return (
               <Link key={item.id} to={`/items/${item.id}`} className="item-card">
                 <div className="item-photo">
-                  {photo ? <img src={photo.url} alt={item.name} /> : <IconItems />}
+                  {photo ? <img src={photo.url} alt={item.name} /> : <PhotoPlaceholder />}
                   {item.inStock === false && <span className="stock-dot">在庫切れ</span>}
                 </div>
                 <div className="item-body">

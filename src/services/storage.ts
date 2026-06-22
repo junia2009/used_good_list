@@ -1,4 +1,4 @@
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { storage } from '../firebase';
 
 /** 画像を長辺 maxSize まで縮小し JPEG Blob にする（アップロード前の最適化） */
@@ -35,4 +35,9 @@ export async function uploadItemPhoto(
   await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
   const url = await getDownloadURL(storageRef);
   return { path, url };
+}
+
+/** 商品写真を Storage から削除する（存在しない場合は無視） */
+export async function deleteItemPhoto(path: string): Promise<void> {
+  await deleteObject(ref(storage, path));
 }

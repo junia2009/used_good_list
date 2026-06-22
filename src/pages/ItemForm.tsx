@@ -9,7 +9,7 @@ import {
   updateItem,
   type ItemInput,
 } from '../services/items';
-import { uploadItemPhoto } from '../services/storage';
+import { deleteItemPhoto, uploadItemPhoto } from '../services/storage';
 import type { Photo } from '../types';
 import { IconClose, IconCamera } from '../components/icons';
 
@@ -25,6 +25,7 @@ export default function ItemForm() {
   const [form, setForm] = useState<ItemInput>({ name: '', brand: '', category: '' });
   const [files, setFiles] = useState<File[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<Photo[]>([]);
+  const [removedPaths, setRemovedPaths] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -49,6 +50,23 @@ export default function ItemForm() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  /** 既存写真を一覧から外す（保存時に Storage からも削除）。代表写真なら別の写真へ引き継ぐ */
+  function removeExistingPhoto(target: Photo) {
+    setExistingPhotos((prev) => {
+      const next = prev.filter((p) => p.path !== target.path);
+      if (target.isPrimary && next.length > 0 && !next.some((p) => p.isPrimary)) {
+        next[0] = { ...next[0], isPrimary: true };
+      }
+      return next;
+    });
+    setRemovedPaths((prev) => [...prev, target.path]);
+  }
+
+  /** 追加予定（未アップロード）の写真を取り消す */
+  function removeNewFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
   async function handleSave() {
     if (!user || !currentGroup) return;
     if (!form.name.trim() || !form.brand.trim()) {
@@ -67,7 +85,7 @@ export default function ItemForm() {
         : await createItem(currentGroup.id, user.uid, form);
       if (isEdit) await updateItem(currentGroup.id, id, form);
 
-      if (files.length > 0) {
+      if (files.length > 0 || removedPaths.length > 0) {
         const uploaded = await Promise.all(
           files.map((f) => uploadItemPhoto(currentGroup.id, id, f)),
         );
@@ -78,7 +96,15 @@ export default function ItemForm() {
             isPrimary: existingPhotos.length === 0 && i === 0,
           })),
         ];
+        // 代表写真が消えてしまった場合は先頭を代表にする
+        if (photos.length > 0 && !photos.some((p) => p.isPrimary)) {
+          photos[0] = { ...photos[0], isPrimary: true };
+        }
         await setItemPhotos(currentGroup.id, id, photos);
+        // 削除された写真の実体を Storage から消す（失敗しても保存は継続）
+        await Promise.all(
+          removedPaths.map((p) => deleteItemPhoto(p).catch(() => undefined)),
+        );
       }
       navigate(`/items/${id}`);
     } catch {
@@ -102,10 +128,30 @@ export default function ItemForm() {
 
       <div className="photo-row">
         {existingPhotos.map((p) => (
-          <img key={p.path} className="thumb" src={p.url} alt="" />
+          <div key={p.path} className="thumb-wrap">
+            <img className="thumb" src={p.url} alt="" />
+            <button
+              type="button"
+              className="thumb-del"
+              onClick={() => removeExistingPhoto(p)}
+              aria-label="写真を削除"
+            >
+              <IconClose />
+            </button>
+          </div>
         ))}
         {files.map((f, i) => (
-          <img key={i} className="thumb" src={URL.createObjectURL(f)} alt="" />
+          <div key={i} className="thumb-wrap">
+            <img className="thumb" src={URL.createObjectURL(f)} alt="" />
+            <button
+              type="button"
+              className="thumb-del"
+              onClick={() => removeNewFile(i)}
+              aria-label="写真を削除"
+            >
+              <IconClose />
+            </button>
+          </div>
         ))}
         <label className="photo-add">
           <IconCamera />
