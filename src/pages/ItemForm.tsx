@@ -113,7 +113,11 @@ export default function ItemForm() {
   return (
     <div className="page">
       <header className="form-header">
-        <button className="icon-btn ghost" onClick={() => navigate(-1)} aria-label="キャンセル">
+        <button
+          className="icon-btn ghost"
+          onClick={() => navigate(isEdit ? `/items/${itemId}` : '/items')}
+          aria-label="キャンセル"
+        >
           <IconClose />
         </button>
         <h2>{isEdit ? '商品を編集' : '商品を登録'}</h2>

@@ -60,7 +60,7 @@ export default function ItemDetail() {
   return (
     <div className="page">
       <header className="form-header">
-        <button className="icon-btn ghost" onClick={() => navigate(-1)} aria-label="戻る">
+        <button className="icon-btn ghost" onClick={() => navigate('/items')} aria-label="商品一覧へ戻る">
           <IconBack />
         </button>
         <button
