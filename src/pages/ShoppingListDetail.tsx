@@ -66,7 +66,7 @@ export default function ShoppingListDetail() {
   return (
     <div className="page">
       <header className="form-header">
-        <button className="icon-btn ghost" onClick={() => navigate(-1)} aria-label="戻る">
+        <button className="icon-btn ghost" onClick={() => navigate('/lists')} aria-label="お使いリスト一覧へ戻る">
           <IconBack />
         </button>
         <h2>{list.title}</h2>
