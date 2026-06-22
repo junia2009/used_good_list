@@ -1,15 +1,18 @@
-name: Deploy to Firebase Hosting
+name: Deploy
 
-# push されたら自動でビルドして Firebase Hosting に公開する
+# main に push（マージ）されたタイミングでビルドして Firebase Hosting に公開する。
+# バージョンは GITHUB_RUN_NUMBER から自動採番（vite.config.ts 参照）。
 on:
   push:
-    branches:
-      - main
-      - claude/household-item-sharing-app-ldov42
-  workflow_dispatch: # 手動実行も可能
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
 
 jobs:
   build_and_deploy:

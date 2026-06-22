@@ -7,9 +7,21 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 const commit = (process.env.GITHUB_SHA ?? '').slice(0, 7) || 'local';
 const buildDate = new Date().toISOString().slice(0, 10);
 
+/**
+ * デプロイ（CIビルド）ごとにバージョンを 0.0.1 ずつ上げる。
+ * GitHub Actions の実行番号 N を 10進法でくり上げて major.minor.patch にする。
+ * 例: 1→0.0.1, 10→0.1.0, 100→1.0.0。ローカルビルドは package.json の値。
+ */
+function deriveVersion(): string {
+  const n = parseInt(process.env.GITHUB_RUN_NUMBER ?? '', 10);
+  if (!Number.isFinite(n) || n <= 0) return pkg.version;
+  return `${Math.floor(n / 100)}.${Math.floor(n / 10) % 10}.${n % 10}`;
+}
+const version = deriveVersion();
+
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_VERSION__: JSON.stringify(version),
     __APP_COMMIT__: JSON.stringify(commit),
     __APP_BUILD_DATE__: JSON.stringify(buildDate),
   },
