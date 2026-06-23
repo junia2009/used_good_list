@@ -53,6 +53,24 @@ export async function getItem(groupId: string, itemId: string): Promise<Item | n
   return snap.exists() ? { id: snap.id, ...(snap.data() as Omit<Item, 'id'>) } : null;
 }
 
+/**
+ * 単一商品をリアルタイム購読（キャッシュ即時→サーバ同期）。解除関数を返す。
+ * 一発 getDoc と違い再接続中でも固まらず、第2引数の onData が必ず呼ばれる
+ * （存在しなければ null）。在庫切替などの更新も即座に反映される。
+ */
+export function watchItem(
+  groupId: string,
+  itemId: string,
+  onData: (item: Item | null) => void,
+  onError?: (e: Error) => void,
+): () => void {
+  return onSnapshot(
+    doc(db, 'groups', groupId, 'items', itemId),
+    (snap) => onData(snap.exists() ? { id: snap.id, ...(snap.data() as Omit<Item, 'id'>) } : null),
+    (err) => onError?.(err),
+  );
+}
+
 export type ItemInput = Omit<Item, 'id' | 'photos' | 'createdBy' | 'createdAt' | 'updatedAt'>;
 
 /** 写真なしで先に商品を作成（ID を得てから写真をアップロードするため） */

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
-import { deleteItem, getItem, updateItem } from '../services/items';
+import { deleteItem, updateItem, watchItem } from '../services/items';
 import {
   createShoppingList,
   listShoppingLists,
@@ -25,17 +25,28 @@ export default function ItemDetail() {
   const { currentGroup } = useGroup();
   const navigate = useNavigate();
   const [item, setItem] = useState<Item | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [active, setActive] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [msg, setMsg] = useState('');
   const trackRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
 
+  // リアルタイム購読：キャッシュを即時に返すため再接続中でも固まらない
   useEffect(() => {
-    if (currentGroup && itemId) {
-      setActive(0);
-      getItem(currentGroup.id, itemId).then(setItem);
-    }
+    if (!currentGroup || !itemId) return;
+    setActive(0);
+    setLoaded(false);
+    return watchItem(
+      currentGroup.id,
+      itemId,
+      (it) => {
+        setItem(it);
+        setLoaded(true);
+      },
+      // エラー時もスピナーは止める（固まらせない）
+      () => setLoaded(true),
+    );
   }, [currentGroup, itemId]);
 
   // 全画面表示中は背景スクロールを止め、Esc で閉じる
@@ -60,7 +71,23 @@ export default function ItemDetail() {
     }
   }, [viewerOpen]);
 
-  if (!item || !currentGroup) return <div className="centered">読み込み中…</div>;
+  if (!currentGroup || !loaded) return <div className="centered">読み込み中…</div>;
+
+  if (!item) {
+    return (
+      <div className="page">
+        <header className="form-header">
+          <button className="icon-btn ghost" onClick={() => navigate('/items')} aria-label="商品一覧へ戻る">
+            <IconBack />
+          </button>
+        </header>
+        <div className="empty">
+          <PhotoPlaceholder />
+          <p>この商品は見つかりませんでした。{'\n'}削除された可能性があります。</p>
+        </div>
+      </div>
+    );
+  }
 
   async function handleDelete() {
     if (!currentGroup || !item) return;
@@ -71,9 +98,8 @@ export default function ItemDetail() {
 
   async function toggleStock() {
     if (!currentGroup || !item) return;
-    const next = !item.inStock;
-    await updateItem(currentGroup.id, item.id, { inStock: next });
-    setItem({ ...item, inStock: next });
+    // 書き込むと購読側に即時反映される（保留書き込みも即時）
+    await updateItem(currentGroup.id, item.id, { inStock: !item.inStock });
   }
 
   /** 直近の active なお使いリストに追加。なければ新規作成 */
