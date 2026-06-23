@@ -1003,15 +1003,54 @@ textarea {
   margin: 8px 0 0;
 }
 .shop-items li {
+  margin-bottom: 10px;
+}
+/* 左へスワイプすると背後の「削除」が現れる（scroll-snap 方式） */
+.swipe-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--r);
+}
+.swipe-track::-webkit-scrollbar {
+  display: none;
+}
+.swipe-content {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 12px 14px;
   box-shadow: var(--sh-sm);
+}
+.shop-items li.checked .swipe-content {
+  background: var(--surface-2);
+}
+.swipe-delete {
+  flex: 0 0 84px;
+  scroll-snap-align: end;
+  margin-left: 8px;
+  border: none;
+  border-radius: var(--r);
+  background: var(--danger);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.swipe-delete svg {
+  width: 20px;
+  height: 20px;
 }
 .shop-items label {
   display: flex;
@@ -1020,9 +1059,6 @@ textarea {
   flex: 1 1 auto;
   min-width: 0;
   cursor: pointer;
-}
-.shop-items li.checked {
-  background: var(--surface-2);
 }
 .qty-stepper.sm {
   flex: 0 0 auto;
@@ -1037,25 +1073,12 @@ textarea {
   min-width: 20px;
   font-size: 16px;
 }
-.shop-items .row-del {
-  flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: none;
+/* スワイプで開いているか分かるよう、わずかな手がかり */
+.swipe-hint {
+  text-align: center;
   color: var(--muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.shop-items .row-del svg {
-  width: 18px;
-  height: 18px;
-}
-.shop-items .row-del:active {
-  background: var(--danger-soft);
-  color: var(--danger);
+  font-size: 12px;
+  margin: 2px 0 8px;
 }
 .check {
   flex: 0 0 auto;
