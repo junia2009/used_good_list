@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   DndContext,
@@ -20,7 +20,14 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroup } from '../contexts/GroupContext';
-import { createItem, reorderItems, sortItemsByOrder, watchItems, type ItemInput } from '../services/items';
+import {
+  createItem,
+  migrateItemCategories,
+  reorderItems,
+  sortItemsByOrder,
+  watchItems,
+  type ItemInput,
+} from '../services/items';
 import { subscribeWithTimeout } from '../services/realtime';
 import { PRESET_GROUPS } from '../data/presets';
 import type { Item } from '../types';
@@ -90,6 +97,8 @@ export default function ItemList() {
   const [category, setCategory] = useState('すべて');
   const [presetOpen, setPresetOpen] = useState(false);
   const [addingPreset, setAddingPreset] = useState<string>('');
+  // グループごとに一度だけ旧カテゴリ移行を試みる
+  const migratedRef = useRef<string | null>(null);
 
   const sensors = useSensors(
     // マウスは少し動かしてからドラッグ開始（クリックと区別）
@@ -112,6 +121,11 @@ export default function ItemList() {
         setItems(sortItemsByOrder(its));
         setLoading(false);
         setLoadError(false);
+        // 旧カテゴリ（食品/調味料/飲料/洗剤）を新3分類へ自動移行（一度だけ・冪等）
+        if (migratedRef.current !== currentGroup.id) {
+          migratedRef.current = currentGroup.id;
+          migrateItemCategories(currentGroup.id, its).catch(() => undefined);
+        }
       },
       () => {
         setLoadError(true);

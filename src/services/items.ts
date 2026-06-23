@@ -101,6 +101,30 @@ export async function reorderItems(groupId: string, orderedIds: string[]): Promi
   await batch.commit();
 }
 
+/** 旧カテゴリ → 新3分類（食料品/日用品/その他）への対応表 */
+const CATEGORY_MIGRATION: Record<string, string> = {
+  食品: '食料品',
+  調味料: '食料品',
+  飲料: '食料品',
+  洗剤: '日用品',
+};
+
+/**
+ * 旧カテゴリの商品を新3分類へ一括付け替え（冪等：対象が無ければ何もしない）。
+ * 渡された items のうち旧カテゴリのものだけを writeBatch でまとめて更新する。
+ */
+export async function migrateItemCategories(groupId: string, items: Item[]): Promise<void> {
+  const targets = items.filter((i) => i.category && CATEGORY_MIGRATION[i.category]);
+  if (targets.length === 0) return;
+  const batch = writeBatch(db);
+  for (const it of targets) {
+    batch.update(doc(db, 'groups', groupId, 'items', it.id), {
+      category: CATEGORY_MIGRATION[it.category as string],
+    });
+  }
+  await batch.commit();
+}
+
 export async function setItemPhotos(
   groupId: string,
   itemId: string,
