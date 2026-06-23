@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
 import { deleteItem, updateItem, watchItem } from '../services/items';
@@ -22,6 +22,35 @@ import {
   IconPlus,
   PhotoPlaceholder,
 } from '../components/icons';
+
+/** テキスト中の http(s) URL をリンク化（改行はそのまま保持）。 */
+function Linkified({ text }: { text: string }) {
+  const nodes: ReactNode[] = [];
+  const re = /(https?:\/\/[^\s]+)/g;
+  let last = 0;
+  let key = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    let url = m[0];
+    let trail = '';
+    // 末尾の句読点・閉じ括弧はリンクに含めない
+    const tm = url.match(/[)\]）」、。,.!?！？]+$/);
+    if (tm) {
+      trail = tm[0];
+      url = url.slice(0, -trail.length);
+    }
+    nodes.push(
+      <a key={key++} href={url} target="_blank" rel="noopener noreferrer" className="note-link">
+        {url}
+      </a>,
+    );
+    if (trail) nodes.push(trail);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return <>{nodes}</>;
+}
 
 export default function ItemDetail() {
   const { itemId } = useParams();
@@ -275,7 +304,9 @@ export default function ItemDetail() {
       {item.note && (
         <section className="note-card">
           <h3 className="note-label">メモ</h3>
-          <p className="note-body">{item.note}</p>
+          <p className="note-body">
+            <Linkified text={item.note} />
+          </p>
         </section>
       )}
 
