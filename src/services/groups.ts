@@ -27,19 +27,31 @@ function readDoc(ref: DocumentReference, source: ReadSource) {
 }
 
 /**
- * ログインユーザーが所属するグループ一覧を取得。
- * users/{uid}.groupIds を参照する方式（コレクショングループ用インデックス不要）。
+ * ログインユーザーが所属するグループ一覧と、選択中グループ ID を取得。
+ * users/{uid} の groupIds / currentGroupId を参照する方式
+ * （コレクショングループ用インデックス不要）。
+ * 選択中グループをアカウントに持たせることで全端末で同じグループを開ける。
  * source で読み取り元を選べる（'cache' は端末キャッシュのみ＝即時・無通信）。
  */
-export async function getMyGroups(uid: string, source: ReadSource = 'default'): Promise<Group[]> {
+export async function getMyGroups(
+  uid: string,
+  source: ReadSource = 'default',
+): Promise<{ groups: Group[]; selectedGroupId: string | null }> {
   const userSnap = await readDoc(doc(db, 'users', uid), source);
-  const groupIds: string[] = (userSnap.exists() && userSnap.data().groupIds) || [];
+  const data = userSnap.exists() ? userSnap.data() : {};
+  const groupIds: string[] = data.groupIds || [];
+  const selectedGroupId: string | null = data.currentGroupId ?? null;
   const groups: Group[] = [];
   for (const gid of groupIds) {
     const g = await readDoc(doc(db, 'groups', gid), source);
     if (g.exists()) groups.push({ id: g.id, ...(g.data() as Omit<Group, 'id'>) });
   }
-  return groups;
+  return { groups, selectedGroupId };
+}
+
+/** 選択中グループをアカウント（ユーザー文書）に保存。全端末で共有される。 */
+export async function setSelectedGroup(uid: string, groupId: string): Promise<void> {
+  await setDoc(doc(db, 'users', uid), { currentGroupId: groupId }, { merge: true });
 }
 
 /** ユーザー文書の groupIds に追加/削除（所属グループの索引） */

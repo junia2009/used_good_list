@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { getMyGroups } from '../services/groups';
+import { getMyGroups, setSelectedGroup } from '../services/groups';
 import { withTimeout } from '../services/realtime';
 import type { Group } from '../types';
 
@@ -41,7 +41,8 @@ export function GroupProvider({ children }: { children: ReactNode }) {
     let hasData = false;
     try {
       const cached = await getMyGroups(user.uid, 'cache');
-      setGroups(cached);
+      setGroups(cached.groups);
+      applySelection(cached.groups, cached.selectedGroupId);
       hasData = true;
       setLoading(false);
     } catch {
@@ -52,7 +53,8 @@ export function GroupProvider({ children }: { children: ReactNode }) {
     //    一発取得が再接続中に固まらないようタイムアウトを設ける。
     try {
       const fresh = await withTimeout(getMyGroups(user.uid, 'server'));
-      setGroups(fresh);
+      setGroups(fresh.groups);
+      applySelection(fresh.groups, fresh.selectedGroupId);
       setError('');
     } catch (e) {
       console.error('グループの取得に失敗', e);
@@ -60,6 +62,26 @@ export function GroupProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  /**
+   * 選択中グループを反映する。アカウントに保存された選択（全端末で共有）を
+   * 最優先し、無ければ手元の選択、それも無ければグループが1つなら自動選択。
+   * これにより端末ごとに別グループを開いてしまう取り違えを防ぐ。
+   */
+  function applySelection(list: Group[], remoteSelected: string | null) {
+    const valid = (id: string | null) => !!id && list.some((g) => g.id === id);
+    setCurrentGroupId((local) => {
+      const next = valid(remoteSelected)
+        ? remoteSelected
+        : valid(local)
+          ? local
+          : list.length === 1
+            ? list[0].id
+            : local;
+      if (next && next !== local) localStorage.setItem(STORAGE_KEY, next);
+      return next;
+    });
   }
 
   useEffect(() => {
@@ -70,6 +92,8 @@ export function GroupProvider({ children }: { children: ReactNode }) {
   function selectGroup(groupId: string) {
     setCurrentGroupId(groupId);
     localStorage.setItem(STORAGE_KEY, groupId);
+    // アカウントにも保存して他端末と選択を揃える（失敗しても手元の選択は有効）
+    if (user) setSelectedGroup(user.uid, groupId).catch(() => undefined);
   }
 
   const currentGroup =
