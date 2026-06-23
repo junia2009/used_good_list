@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import type { Item, ShoppingList } from '../types';
 import Sheet from '../components/Sheet';
+import { ProductIcon } from '../components/productIllustrations';
 import {
   IconBack,
   IconEdit,
@@ -255,7 +256,7 @@ export default function ItemDetail() {
 
       {item.photos.length === 0 ? (
         <div className="detail-photo">
-          <PhotoPlaceholder />
+          {item.icon ? <ProductIcon name={item.icon} /> : <PhotoPlaceholder />}
         </div>
       ) : (
         <>

@@ -141,6 +141,7 @@ export function toShoppingListItem(item: Item, quantity = 1, note = ''): Shoppin
     nameCache: item.name,
     brandCache: item.brand,
     photoCache: primary?.url ?? '',
+    iconCache: item.icon ?? '',
     quantity,
     note,
     checked: false,

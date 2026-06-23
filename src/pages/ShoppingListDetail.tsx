@@ -18,6 +18,7 @@ import { listItems } from '../services/items';
 import { subscribeWithTimeout } from '../services/realtime';
 import type { Item, ShoppingList } from '../types';
 import Sheet from '../components/Sheet';
+import { ProductIcon } from '../components/productIllustrations';
 import {
   IconBack,
   IconCheck,
@@ -29,19 +30,17 @@ import {
   PhotoPlaceholder,
 } from '../components/icons';
 
-/** 写真サムネ。読み込めない場合はアイコンを表示 */
-function Thumb({ url }: { url: string }) {
+/** 写真サムネ。写真→イラスト→プレースホルダの順でフォールバック。 */
+function Thumb({ url, icon }: { url: string; icon?: string }) {
   const [failed, setFailed] = useState(false);
-  if (!url || failed)
+  if (url && !failed)
     return (
       <span className="shop-photo">
-        <PhotoPlaceholder />
+        <img src={url} alt="" onError={() => setFailed(true)} />
       </span>
     );
   return (
-    <span className="shop-photo">
-      <img src={url} alt="" onError={() => setFailed(true)} />
-    </span>
+    <span className="shop-photo">{icon ? <ProductIcon name={icon} /> : <PhotoPlaceholder />}</span>
   );
 }
 
@@ -304,7 +303,7 @@ export default function ShoppingListDetail() {
                   onChange={() => toggle(it.id)}
                 />
                 <span className="check">{it.checked && <IconCheck />}</span>
-                <Thumb url={it.photoCache} />
+                <Thumb url={it.photoCache} icon={it.iconCache} />
                 <span className="shop-text">
                   <strong className="shop-name">{it.nameCache || '(名称なし)'}</strong>
                   <span className="shop-sub">{it.brandCache}</span>
@@ -375,7 +374,13 @@ export default function ShoppingListDetail() {
                   <li key={p.id}>
                     <button className="product-row" onClick={() => addProduct(p)}>
                       <span className="shop-photo">
-                        {photo ? <img src={photo.url} alt="" /> : <PhotoPlaceholder />}
+                        {photo ? (
+                          <img src={photo.url} alt="" />
+                        ) : p.icon ? (
+                          <ProductIcon name={p.icon} />
+                        ) : (
+                          <PhotoPlaceholder />
+                        )}
                       </span>
                       <span className="shop-text">
                         <strong className="shop-name">{p.name}</strong>
