@@ -13,7 +13,7 @@ import { deleteItemPhoto, uploadItemPhoto } from '../services/storage';
 import type { Photo } from '../types';
 import { IconClose, IconCamera } from '../components/icons';
 
-const CATEGORIES = ['洗剤', '食品', '日用品', '飲料', '調味料', 'その他'];
+const CATEGORIES = ['食料品', '日用品', 'その他'];
 
 export default function ItemForm() {
   const { itemId } = useParams();
