@@ -5,7 +5,7 @@ import { useGroup } from '../contexts/GroupContext';
 import { createShoppingList, watchShoppingLists } from '../services/shoppingLists';
 import { subscribeWithTimeout } from '../services/realtime';
 import type { ShoppingList } from '../types';
-import { IconPlus, IconCheck, IconCart } from '../components/icons';
+import { IconPlus, IconCheck, IconCart, IconChevron } from '../components/icons';
 
 export default function ShoppingLists() {
   const { user } = useAuth();
@@ -74,7 +74,15 @@ export default function ShoppingLists() {
 
   return (
     <div className="page">
-      <h2>お使いリスト</h2>
+      <header className="list-header">
+        <div className="title-row">
+          <h2>お使いリスト</h2>
+          <Link to="/groups" className="icon-btn ghost" aria-label="グループ切替">
+            <IconChevron />
+          </Link>
+        </div>
+        <p className="group-label">グループ：{currentGroup.name}</p>
+      </header>
       <ul className="list">
         {active.map((l) => (
           <li key={l.id}>

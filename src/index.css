@@ -482,6 +482,12 @@ textarea {
 .list-header h2 {
   font-size: 24px;
 }
+.group-label {
+  margin: -4px 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
 .search-field {
   position: relative;
   margin-bottom: 12px;
