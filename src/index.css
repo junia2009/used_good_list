@@ -1005,21 +1005,16 @@ textarea {
 .shop-items li {
   margin-bottom: 10px;
 }
-/* 左へスワイプすると背後の「削除」が現れる（scroll-snap 方式） */
-.swipe-track {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+/* 左スワイプで背後の「削除」を表示（transform 方式・スクロールコンテナ不使用） */
+.swipe-row {
+  position: relative;
   border-radius: var(--r);
-}
-.swipe-track::-webkit-scrollbar {
-  display: none;
+  overflow: hidden;
+  box-shadow: var(--sh-sm);
 }
 .swipe-content {
-  flex: 0 0 100%;
-  scroll-snap-align: start;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1027,17 +1022,19 @@ textarea {
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 12px 14px;
-  box-shadow: var(--sh-sm);
+  touch-action: pan-y;
 }
 .shop-items li.checked .swipe-content {
   background: var(--surface-2);
 }
 .swipe-delete {
-  flex: 0 0 84px;
-  scroll-snap-align: end;
-  margin-left: 8px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  width: 84px;
   border: none;
-  border-radius: var(--r);
   background: var(--danger);
   color: #fff;
   display: flex;
