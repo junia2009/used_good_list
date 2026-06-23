@@ -125,6 +125,13 @@ export default function ShoppingListDetail() {
     await updateShoppingList(currentGroup.id, list.id, { items });
   }
 
+  /** この商品をリストから削除（購読中の最新リストを書き戻す）。 */
+  async function removeItem(itemId: string) {
+    if (!currentGroup || !list) return;
+    const items = list.items.filter((i) => i.id !== itemId);
+    await updateShoppingList(currentGroup.id, list.id, { items });
+  }
+
   /** リスト名を保存（空・変更なしは無視）。 */
   async function saveTitle() {
     setEditingTitle(false);
@@ -246,6 +253,14 @@ export default function ShoppingListDetail() {
                 ＋
               </button>
             </div>
+            <button
+              type="button"
+              className="row-del"
+              onClick={() => removeItem(it.id)}
+              aria-label="リストから削除"
+            >
+              <IconTrash />
+            </button>
           </li>
         ))}
         {list.items.length === 0 && (
