@@ -20,6 +20,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useGroup } from '../contexts/GroupContext';
 import { reorderItems, sortItemsByOrder, watchItems } from '../services/items';
+import { subscribeWithTimeout } from '../services/realtime';
 import type { Item } from '../types';
 import { IconSearch, IconPlus, IconItems, IconChevron, PhotoPlaceholder } from '../components/icons';
 
@@ -92,18 +93,18 @@ export default function ItemList() {
     }
     setLoading(true);
     setLoadError(false);
-    const unsub = watchItems(
-      currentGroup.id,
+    return subscribeWithTimeout<Item[]>(
+      (onData, onError) => watchItems(currentGroup.id, onData, onError),
       (its) => {
         setItems(sortItemsByOrder(its));
         setLoading(false);
+        setLoadError(false);
       },
       () => {
         setLoadError(true);
         setLoading(false);
       },
     );
-    return unsub;
   }, [currentGroup, navigate, reloadKey]);
 
   const categories = useMemo(() => {

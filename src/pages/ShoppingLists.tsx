@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useGroup } from '../contexts/GroupContext';
 import { createShoppingList, watchShoppingLists } from '../services/shoppingLists';
+import { subscribeWithTimeout } from '../services/realtime';
 import type { ShoppingList } from '../types';
 import { IconPlus, IconCheck, IconCart } from '../components/icons';
 
@@ -22,18 +23,18 @@ export default function ShoppingLists() {
     }
     setLoading(true);
     setLoadError(false);
-    const unsub = watchShoppingLists(
-      currentGroup.id,
+    return subscribeWithTimeout<ShoppingList[]>(
+      (onData, onError) => watchShoppingLists(currentGroup.id, onData, onError),
       (ls) => {
         setLists(ls);
         setLoading(false);
+        setLoadError(false);
       },
       () => {
         setLoadError(true);
         setLoading(false);
       },
     );
-    return unsub;
   }, [currentGroup, navigate, reloadKey]);
 
   async function handleCreate() {

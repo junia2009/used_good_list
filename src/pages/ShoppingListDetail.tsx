@@ -6,6 +6,7 @@ import {
   updateShoppingList,
   watchShoppingList,
 } from '../services/shoppingLists';
+import { subscribeWithTimeout } from '../services/realtime';
 import type { ShoppingList } from '../types';
 import { IconBack, IconCheck, IconTrash, IconCart, PhotoPlaceholder } from '../components/icons';
 
@@ -30,14 +31,60 @@ export default function ShoppingListDetail() {
   const { currentGroup } = useGroup();
   const navigate = useNavigate();
   const [list, setList] = useState<ShoppingList | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!currentGroup || !listId) return;
-    // リアルタイム購読：家族の誰かがチェックすると即反映される
-    return watchShoppingList(currentGroup.id, listId, setList);
-  }, [currentGroup, listId]);
+    setLoaded(false);
+    setLoadError(false);
+    // リアルタイム購読：家族の誰かがチェックすると即反映される。
+    // 初回データが届かない時はタイムアウトで再読み込み可能な状態にする。
+    return subscribeWithTimeout<ShoppingList | null>(
+      (onData, onError) => watchShoppingList(currentGroup.id, listId, onData, onError),
+      (l) => {
+        setList(l);
+        setLoaded(true);
+        setLoadError(false);
+      },
+      () => {
+        setLoadError(true);
+        setLoaded(true);
+      },
+    );
+  }, [currentGroup, listId, reloadKey]);
 
-  if (!list || !currentGroup) return <div className="centered">読み込み中…</div>;
+  if (!currentGroup || !loaded) return <div className="centered">読み込み中…</div>;
+
+  if (!list) {
+    return (
+      <div className="page">
+        <header className="form-header">
+          <button className="icon-btn ghost" onClick={() => navigate('/lists')} aria-label="お使いリスト一覧へ戻る">
+            <IconBack />
+          </button>
+        </header>
+        <div className="empty">
+          <IconCart />
+          {loadError ? (
+            <>
+              <p>読み込みに失敗しました。{'\n'}電波の良い場所でお試しください。</p>
+              <button
+                className="btn-secondary"
+                style={{ maxWidth: 240, margin: '12px auto 0' }}
+                onClick={() => setReloadKey((k) => k + 1)}
+              >
+                再読み込み
+              </button>
+            </>
+          ) : (
+            <p>このリストは見つかりませんでした。{'\n'}削除された可能性があります。</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   async function toggle(itemId: string) {
     if (!currentGroup || !list) return;
