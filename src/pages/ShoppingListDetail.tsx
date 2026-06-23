@@ -216,51 +216,58 @@ export default function ShoppingListDetail() {
         <IconPlus /> 商品を追加
       </button>
 
+      {list.items.length > 0 && <p className="swipe-hint">← 左にスワイプで削除</p>}
+
       <ul className="shop-items">
         {list.items.map((it) => (
           <li key={it.id} className={it.checked ? 'checked' : ''}>
-            <label>
-              <input
-                type="checkbox"
-                className="visually-hidden"
-                checked={it.checked}
-                onChange={() => toggle(it.id)}
-              />
-              <span className="check">{it.checked && <IconCheck />}</span>
-              <Thumb url={it.photoCache} />
-              <span className="shop-text">
-                <strong className="shop-name">{it.nameCache || '(名称なし)'}</strong>
-                <span className="shop-sub">{it.brandCache}</span>
-                {it.note && <em>メモ: {it.note}</em>}
-              </span>
-            </label>
-            <div className="qty-stepper sm">
+            <div className="swipe-track">
+              <div className="swipe-content">
+                <label>
+                  <input
+                    type="checkbox"
+                    className="visually-hidden"
+                    checked={it.checked}
+                    onChange={() => toggle(it.id)}
+                  />
+                  <span className="check">{it.checked && <IconCheck />}</span>
+                  <Thumb url={it.photoCache} />
+                  <span className="shop-text">
+                    <strong className="shop-name">{it.nameCache || '(名称なし)'}</strong>
+                    <span className="shop-sub">{it.brandCache}</span>
+                    {it.note && <em>メモ: {it.note}</em>}
+                  </span>
+                </label>
+                <div className="qty-stepper sm">
+                  <button
+                    type="button"
+                    onClick={() => changeQty(it.id, -1)}
+                    disabled={(it.quantity || 1) <= 1}
+                    aria-label="個数を減らす"
+                  >
+                    −
+                  </button>
+                  <span className="qty-value">{it.quantity || 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => changeQty(it.id, 1)}
+                    disabled={(it.quantity || 1) >= 99}
+                    aria-label="個数を増やす"
+                  >
+                    ＋
+                  </button>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => changeQty(it.id, -1)}
-                disabled={(it.quantity || 1) <= 1}
-                aria-label="個数を減らす"
+                className="swipe-delete"
+                onClick={() => removeItem(it.id)}
+                aria-label="リストから削除"
               >
-                −
-              </button>
-              <span className="qty-value">{it.quantity || 1}</span>
-              <button
-                type="button"
-                onClick={() => changeQty(it.id, 1)}
-                disabled={(it.quantity || 1) >= 99}
-                aria-label="個数を増やす"
-              >
-                ＋
+                <IconTrash />
+                削除
               </button>
             </div>
-            <button
-              type="button"
-              className="row-del"
-              onClick={() => removeItem(it.id)}
-              aria-label="リストから削除"
-            >
-              <IconTrash />
-            </button>
           </li>
         ))}
         {list.items.length === 0 && (
