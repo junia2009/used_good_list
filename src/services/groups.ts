@@ -6,6 +6,8 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocFromCache,
+  getDocFromServer,
   getDocs,
   serverTimestamp,
   setDoc,
@@ -14,17 +16,27 @@ import {
 import { db } from '../firebase';
 import type { Group, Invite, Member } from '../types';
 import type { User } from 'firebase/auth';
+import type { DocumentReference } from 'firebase/firestore';
+
+type ReadSource = 'default' | 'cache' | 'server';
+
+function readDoc(ref: DocumentReference, source: ReadSource) {
+  if (source === 'cache') return getDocFromCache(ref);
+  if (source === 'server') return getDocFromServer(ref);
+  return getDoc(ref);
+}
 
 /**
  * ログインユーザーが所属するグループ一覧を取得。
  * users/{uid}.groupIds を参照する方式（コレクショングループ用インデックス不要）。
+ * source で読み取り元を選べる（'cache' は端末キャッシュのみ＝即時・無通信）。
  */
-export async function getMyGroups(uid: string): Promise<Group[]> {
-  const userSnap = await getDoc(doc(db, 'users', uid));
+export async function getMyGroups(uid: string, source: ReadSource = 'default'): Promise<Group[]> {
+  const userSnap = await readDoc(doc(db, 'users', uid), source);
   const groupIds: string[] = (userSnap.exists() && userSnap.data().groupIds) || [];
   const groups: Group[] = [];
   for (const gid of groupIds) {
-    const g = await getDoc(doc(db, 'groups', gid));
+    const g = await readDoc(doc(db, 'groups', gid), source);
     if (g.exists()) groups.push({ id: g.id, ...(g.data() as Omit<Group, 'id'>) });
   }
   return groups;

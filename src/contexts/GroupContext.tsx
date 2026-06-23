@@ -33,12 +33,28 @@ export function GroupProvider({ children }: { children: ReactNode }) {
     }
     setLoading(true);
     setError('');
+
+    // 1) まず端末キャッシュから即時復元。
+    //    PWA を閉じて開き直したとき、サーバ応答待ちで「読み込み中」のまま
+    //    固まるのを防ぐ（キャッシュがあればここで loading を解除する）。
+    let hasData = false;
     try {
-      const gs = await getMyGroups(user.uid);
-      setGroups(gs);
+      const cached = await getMyGroups(user.uid, 'cache');
+      setGroups(cached);
+      hasData = true;
+      setLoading(false);
+    } catch {
+      // 初回などキャッシュ未保存。サーバ取得の結果を待つ
+    }
+
+    // 2) サーバから最新化（失敗・遅延してもキャッシュ表示は維持）。
+    try {
+      const fresh = await getMyGroups(user.uid, 'server');
+      setGroups(fresh);
+      setError('');
     } catch (e) {
       console.error('グループの取得に失敗', e);
-      setError(e instanceof Error ? e.message : 'グループの取得に失敗しました');
+      if (!hasData) setError(e instanceof Error ? e.message : 'グループの取得に失敗しました');
     } finally {
       setLoading(false);
     }
