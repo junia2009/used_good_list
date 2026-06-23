@@ -28,6 +28,7 @@ export default function ItemDetail() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [msg, setMsg] = useState('');
   const [msgIsError, setMsgIsError] = useState(false);
+  const [qty, setQty] = useState(1);
   const trackRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
 
@@ -122,9 +123,10 @@ export default function ItemDetail() {
   async function addToShopping() {
     if (!user || !currentGroup || !item) return;
     try {
-      await addItemToActiveList(currentGroup.id, user.uid, toShoppingListItem(item));
+      await addItemToActiveList(currentGroup.id, user.uid, toShoppingListItem(item, qty));
       setMsgIsError(false);
-      setMsg('お使いリストに追加しました');
+      setMsg(`お使いリストに追加しました（${qty}個）`);
+      setQty(1);
     } catch {
       setMsgIsError(true);
       setMsg('追加に失敗しました。通信状況をご確認ください。');
@@ -208,6 +210,28 @@ export default function ItemDetail() {
       </dl>
 
       <div className="detail-actions">
+        <div className="qty-row">
+          <span>個数</span>
+          <div className="qty-stepper">
+            <button
+              type="button"
+              onClick={() => setQty((q) => Math.max(1, q - 1))}
+              disabled={qty <= 1}
+              aria-label="個数を減らす"
+            >
+              −
+            </button>
+            <span className="qty-value" aria-live="polite">{qty}</span>
+            <button
+              type="button"
+              onClick={() => setQty((q) => Math.min(99, q + 1))}
+              disabled={qty >= 99}
+              aria-label="個数を増やす"
+            >
+              ＋
+            </button>
+          </div>
+        </div>
         <button className="btn-primary" onClick={addToShopping}>
           <IconCart /> お使いに追加
         </button>
