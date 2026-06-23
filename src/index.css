@@ -1134,3 +1134,139 @@ textarea {
   line-height: 1.6;
   margin: 24px 0 8px;
 }
+
+/* ============================================================
+   Sheet (bottom modal) & pickers
+   ============================================================ */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sheet {
+  width: 100%;
+  max-width: 520px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: var(--sh-lg);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  animation: sheet-up 0.18s ease-out;
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 14px 6px 18px;
+}
+.sheet-head h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.sheet-body {
+  overflow-y: auto;
+  padding: 6px 16px 16px;
+}
+
+.picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.picker-products {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.product-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 12px;
+  box-shadow: var(--sh-sm);
+  color: var(--text);
+}
+.product-row .add-plus {
+  width: 22px;
+  height: 22px;
+  color: var(--primary);
+  flex: 0 0 auto;
+}
+.added-badge {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  color: var(--olive);
+  font-weight: 700;
+  font-size: 14px;
+}
+.added-badge svg {
+  width: 16px;
+  height: 16px;
+}
+.picker-empty {
+  text-align: center;
+  padding: 22px 0;
+}
+
+/* お使いリスト名の編集 */
+.title-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  min-width: 0;
+}
+.title-pencil {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+.title-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+}
+.add-product {
+  margin: 4px 0 4px;
+}

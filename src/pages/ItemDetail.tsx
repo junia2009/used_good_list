@@ -2,16 +2,24 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
 import { deleteItem, updateItem, watchItem } from '../services/items';
-import { subscribeWithTimeout } from '../services/realtime';
-import { addItemToActiveList, toShoppingListItem } from '../services/shoppingLists';
+import { subscribeWithTimeout, withTimeout } from '../services/realtime';
+import {
+  addItemToActiveList,
+  addItemToList,
+  createShoppingList,
+  listShoppingLists,
+  toShoppingListItem,
+} from '../services/shoppingLists';
 import { useAuth } from '../contexts/AuthContext';
-import type { Item } from '../types';
+import type { Item, ShoppingList } from '../types';
+import Sheet from '../components/Sheet';
 import {
   IconBack,
   IconEdit,
   IconCart,
   IconTrash,
   IconClose,
+  IconPlus,
   PhotoPlaceholder,
 } from '../components/icons';
 
@@ -29,6 +37,8 @@ export default function ItemDetail() {
   const [msg, setMsg] = useState('');
   const [msgIsError, setMsgIsError] = useState(false);
   const [qty, setQty] = useState(1);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerLists, setPickerLists] = useState<ShoppingList[]>([]);
   const trackRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
 
@@ -119,17 +129,71 @@ export default function ItemDetail() {
     await updateItem(currentGroup.id, item.id, { inStock: !item.inStock });
   }
 
-  /** 現在アクティブなお使いリストに原子的に追加（なければ新規作成）。 */
+  function notifyAdded(label: string) {
+    setMsgIsError(false);
+    setMsg(`${label}（${qty}個）`);
+    setQty(1);
+  }
+
+  function notifyError() {
+    setMsgIsError(true);
+    setMsg('追加に失敗しました。通信状況をご確認ください。');
+  }
+
+  /**
+   * お使いに追加。リストが複数あるときは追加先を選ぶピッカーを開き、
+   * 0〜1件のときはこれまでどおりアクティブなリスト（無ければ新規作成）へ。
+   */
   async function addToShopping() {
     if (!user || !currentGroup || !item) return;
+    let lists: ShoppingList[] = [];
+    try {
+      lists = await withTimeout(listShoppingLists(currentGroup.id, 'server'));
+    } catch {
+      try {
+        lists = await listShoppingLists(currentGroup.id);
+      } catch {
+        lists = [];
+      }
+    }
+    if (lists.length >= 2) {
+      setPickerLists(lists);
+      setPickerOpen(true);
+      return;
+    }
     try {
       await addItemToActiveList(currentGroup.id, user.uid, toShoppingListItem(item, qty));
-      setMsgIsError(false);
-      setMsg(`お使いリストに追加しました（${qty}個）`);
-      setQty(1);
+      notifyAdded('お使いリストに追加しました');
     } catch {
-      setMsgIsError(true);
-      setMsg('追加に失敗しました。通信状況をご確認ください。');
+      notifyError();
+    }
+  }
+
+  /** ピッカーで選んだ既存リストへ追加。 */
+  async function addToChosenList(listId: string) {
+    if (!currentGroup || !item) return;
+    try {
+      await addItemToList(currentGroup.id, listId, toShoppingListItem(item, qty));
+      notifyAdded('お使いリストに追加しました');
+    } catch {
+      notifyError();
+    } finally {
+      setPickerOpen(false);
+    }
+  }
+
+  /** ピッカーから新規リストを作って追加。 */
+  async function createListAndAdd() {
+    if (!user || !currentGroup || !item) return;
+    try {
+      const title = `${new Date().toLocaleDateString('ja-JP')}の買い物`;
+      const id = await createShoppingList(currentGroup.id, user.uid, title);
+      await addItemToList(currentGroup.id, id, toShoppingListItem(item, qty));
+      notifyAdded('新しいリストに追加しました');
+    } catch {
+      notifyError();
+    } finally {
+      setPickerOpen(false);
     }
   }
 
@@ -243,6 +307,30 @@ export default function ItemDetail() {
         </button>
         {msg && <p className={msgIsError ? 'error' : 'success'}>{msg}</p>}
       </div>
+
+      {pickerOpen && (
+        <Sheet title="どのリストに追加しますか？" onClose={() => setPickerOpen(false)}>
+          <ul className="picker-list">
+            {pickerLists.map((l) => (
+              <li key={l.id}>
+                <button className="row-btn" onClick={() => addToChosenList(l.id)}>
+                  <span className="list-title">{l.title}</span>
+                  <span className="muted sm">
+                    {l.status === 'done' ? '完了' : `${l.items.length}点`}
+                  </span>
+                </button>
+              </li>
+            ))}
+            <li>
+              <button className="row-btn" onClick={createListAndAdd}>
+                <span className="list-title">
+                  <IconPlus className="row-lead" /> 新しいリストを作成して追加
+                </span>
+              </button>
+            </li>
+          </ul>
+        </Sheet>
+      )}
 
       {viewerOpen && (
         <div className="lightbox" role="dialog" aria-modal="true" onClick={() => setViewerOpen(false)}>

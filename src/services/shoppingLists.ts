@@ -82,6 +82,17 @@ export async function createShoppingList(
   return ref.id;
 }
 
+/** 指定したお使いリストへ商品を原子的に1件追記（配列まるごと上書きしない）。 */
+export async function addItemToList(
+  groupId: string,
+  listId: string,
+  listItem: ShoppingListItem,
+): Promise<void> {
+  await updateDoc(doc(db, 'groups', groupId, 'shoppingLists', listId), {
+    items: arrayUnion(listItem),
+  });
+}
+
 /**
  * 商品を「現在アクティブなお使いリスト」に追加する。
  * 端末間で取りこぼし・二重作成が起きないよう次の2点を担保する：

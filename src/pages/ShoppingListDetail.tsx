@@ -2,13 +2,26 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
 import {
+  addItemToList,
   deleteShoppingList,
+  toShoppingListItem,
   updateShoppingList,
   watchShoppingList,
 } from '../services/shoppingLists';
+import { listItems } from '../services/items';
 import { subscribeWithTimeout } from '../services/realtime';
-import type { ShoppingList } from '../types';
-import { IconBack, IconCheck, IconTrash, IconCart, PhotoPlaceholder } from '../components/icons';
+import type { Item, ShoppingList } from '../types';
+import Sheet from '../components/Sheet';
+import {
+  IconBack,
+  IconCheck,
+  IconTrash,
+  IconCart,
+  IconEdit,
+  IconPlus,
+  IconSearch,
+  PhotoPlaceholder,
+} from '../components/icons';
 
 /** 写真サムネ。読み込めない場合はアイコンを表示 */
 function Thumb({ url }: { url: string }) {
@@ -34,6 +47,12 @@ export default function ShoppingListDetail() {
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [products, setProducts] = useState<Item[]>([]);
+  const [pquery, setPquery] = useState('');
+  const [addedIds, setAddedIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!currentGroup || !listId) return;
@@ -106,6 +125,36 @@ export default function ShoppingListDetail() {
     await updateShoppingList(currentGroup.id, list.id, { items });
   }
 
+  /** リスト名を保存（空・変更なしは無視）。 */
+  async function saveTitle() {
+    setEditingTitle(false);
+    if (!currentGroup || !list) return;
+    const t = titleDraft.trim();
+    if (t && t !== list.title) {
+      await updateShoppingList(currentGroup.id, list.id, { title: t });
+    }
+  }
+
+  /** 商品追加ピッカーを開き、商品カタログを読み込む。 */
+  async function openProductPicker() {
+    if (!currentGroup) return;
+    setPquery('');
+    setAddedIds([]);
+    setPickerOpen(true);
+    try {
+      setProducts(await listItems(currentGroup.id));
+    } catch {
+      setProducts([]);
+    }
+  }
+
+  /** カタログの商品をこのリストへ追加（個数1。後でステッパー調整可）。 */
+  async function addProduct(it: Item) {
+    if (!currentGroup || !list) return;
+    await addItemToList(currentGroup.id, list.id, toShoppingListItem(it, 1));
+    setAddedIds((prev) => [...prev, it.id]);
+  }
+
   async function finishList() {
     if (!currentGroup || !list) return;
     const status = list.status === 'active' ? 'done' : 'active';
@@ -127,11 +176,38 @@ export default function ShoppingListDetail() {
         <button className="icon-btn ghost" onClick={() => navigate('/lists')} aria-label="お使いリスト一覧へ戻る">
           <IconBack />
         </button>
-        <h2>{list.title}</h2>
+        {editingTitle ? (
+          <input
+            className="title-input"
+            value={titleDraft}
+            autoFocus
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onBlur={saveTitle}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') saveTitle();
+              if (e.key === 'Escape') setEditingTitle(false);
+            }}
+          />
+        ) : (
+          <button
+            className="title-edit"
+            onClick={() => {
+              setTitleDraft(list.title);
+              setEditingTitle(true);
+            }}
+          >
+            {list.title}
+            <IconEdit className="title-pencil" />
+          </button>
+        )}
         <span className="progress">
           {checked}/{list.items.length}
         </span>
       </header>
+
+      <button className="btn-secondary add-product" onClick={openProductPicker}>
+        <IconPlus /> 商品を追加
+      </button>
 
       <ul className="shop-items">
         {list.items.map((it) => (
@@ -186,6 +262,59 @@ export default function ShoppingListDetail() {
       <button className="btn-danger" onClick={remove}>
         <IconTrash /> 削除
       </button>
+
+      {pickerOpen && (
+        <Sheet title="商品を追加" onClose={() => setPickerOpen(false)}>
+          <div className="search-field">
+            <IconSearch />
+            <input
+              placeholder="商品名・メーカーで検索"
+              value={pquery}
+              onChange={(e) => setPquery(e.target.value)}
+            />
+          </div>
+          <ul className="picker-products">
+            {products
+              .filter((p) => {
+                const kw = pquery.trim().toLowerCase();
+                return (
+                  !kw ||
+                  p.name.toLowerCase().includes(kw) ||
+                  p.brand.toLowerCase().includes(kw)
+                );
+              })
+              .map((p) => {
+                const photo = p.photos.find((x) => x.isPrimary) ?? p.photos[0];
+                const count = addedIds.filter((id) => id === p.id).length;
+                return (
+                  <li key={p.id}>
+                    <button className="product-row" onClick={() => addProduct(p)}>
+                      <span className="shop-photo">
+                        {photo ? <img src={photo.url} alt="" /> : <PhotoPlaceholder />}
+                      </span>
+                      <span className="shop-text">
+                        <strong className="shop-name">{p.name}</strong>
+                        <span className="shop-sub">{p.brand}</span>
+                      </span>
+                      {count > 0 ? (
+                        <span className="added-badge">
+                          <IconCheck /> {count}
+                        </span>
+                      ) : (
+                        <IconPlus className="add-plus" />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            {products.length === 0 && (
+              <p className="muted picker-empty">
+                商品がありません。先に「商品」タブで登録してください。
+              </p>
+            )}
+          </ul>
+        </Sheet>
+      )}
     </div>
   );
 }
