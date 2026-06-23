@@ -14,7 +14,7 @@ import {
   updateShoppingList,
   watchShoppingList,
 } from '../services/shoppingLists';
-import { listItems } from '../services/items';
+import { watchItems } from '../services/items';
 import { subscribeWithTimeout } from '../services/realtime';
 import type { Item, ShoppingList } from '../types';
 import Sheet from '../components/Sheet';
@@ -147,6 +147,17 @@ export default function ShoppingListDetail() {
     );
   }, [currentGroup, listId, reloadKey]);
 
+  // 商品追加ピッカーを開いている間だけ商品カタログを購読（キャッシュ即返しで
+  // 「商品がありません」と空振りしない）。
+  useEffect(() => {
+    if (!pickerOpen || !currentGroup) return;
+    return watchItems(
+      currentGroup.id,
+      setProducts,
+      () => setProducts([]),
+    );
+  }, [pickerOpen, currentGroup]);
+
   if (!currentGroup || !loaded) return <div className="centered">読み込み中…</div>;
 
   if (!list) {
@@ -215,17 +226,11 @@ export default function ShoppingListDetail() {
     }
   }
 
-  /** 商品追加ピッカーを開き、商品カタログを読み込む。 */
-  async function openProductPicker() {
-    if (!currentGroup) return;
+  /** 商品追加ピッカーを開く（カタログは購読で読み込む）。 */
+  function openProductPicker() {
     setPquery('');
     setAddedIds([]);
     setPickerOpen(true);
-    try {
-      setProducts(await listItems(currentGroup.id));
-    } catch {
-      setProducts([]);
-    }
   }
 
   /** カタログの商品をこのリストへ追加（個数1。後でステッパー調整可）。 */
