@@ -665,6 +665,97 @@ textarea {
   width: 72px;
   height: 72px;
 }
+/* スワイプで写真送りできる横スクロールカルーセル */
+.photo-carousel {
+  display: flex;
+  aspect-ratio: 1;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  box-shadow: var(--sh);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.photo-carousel::-webkit-scrollbar {
+  display: none;
+}
+.photo-slide {
+  flex: 0 0 100%;
+  height: 100%;
+  scroll-snap-align: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+}
+.photo-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 全画面ビューア */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+}
+.lightbox-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.lightbox-track::-webkit-scrollbar {
+  display: none;
+}
+.lightbox-slide {
+  flex: 0 0 100%;
+  height: 100%;
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox-slide img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.lightbox-close {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: 16px;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox-count {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 20px);
+  left: 0;
+  right: 0;
+  z-index: 1;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}
 .dots {
   display: flex;
   gap: 7px;
