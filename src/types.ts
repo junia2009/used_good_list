@@ -44,6 +44,8 @@ export interface Item {
   photos: Photo[];
   inStock?: boolean;
   order?: number;
+  /** 写真が無い商品で表示する内蔵イラストの識別子（定番商品など） */
+  icon?: string;
   createdBy: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
@@ -55,6 +57,7 @@ export interface ShoppingListItem {
   nameCache: string;
   brandCache: string;
   photoCache: string;
+  iconCache?: string;
   quantity: number;
   note: string;
   checked: boolean;

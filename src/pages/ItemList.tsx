@@ -18,10 +18,14 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useAuth } from '../contexts/AuthContext';
 import { useGroup } from '../contexts/GroupContext';
-import { reorderItems, sortItemsByOrder, watchItems } from '../services/items';
+import { createItem, reorderItems, sortItemsByOrder, watchItems, type ItemInput } from '../services/items';
 import { subscribeWithTimeout } from '../services/realtime';
+import { PRESET_GROUPS } from '../data/presets';
 import type { Item } from '../types';
+import Sheet from '../components/Sheet';
+import { ProductIcon } from '../components/productIllustrations';
 import { IconSearch, IconPlus, IconItems, IconChevron, PhotoPlaceholder } from '../components/icons';
 
 /** カード中身（一覧・ドラッグ中で共通） */
@@ -30,7 +34,13 @@ function CardBody({ item }: { item: Item }) {
   return (
     <>
       <div className="item-photo">
-        {photo ? <img src={photo.url} alt={item.name} /> : <PhotoPlaceholder />}
+        {photo ? (
+          <img src={photo.url} alt={item.name} />
+        ) : item.icon ? (
+          <ProductIcon name={item.icon} />
+        ) : (
+          <PhotoPlaceholder />
+        )}
         {item.inStock === false && <span className="stock-dot">在庫切れ</span>}
       </div>
       <div className="item-body">
@@ -69,6 +79,7 @@ function SortableCard({ item }: { item: Item }) {
 }
 
 export default function ItemList() {
+  const { user } = useAuth();
   const { currentGroup } = useGroup();
   const navigate = useNavigate();
   const [items, setItems] = useState<Item[]>([]);
@@ -77,6 +88,8 @@ export default function ItemList() {
   const [reloadKey, setReloadKey] = useState(0);
   const [keyword, setKeyword] = useState('');
   const [category, setCategory] = useState('すべて');
+  const [presetOpen, setPresetOpen] = useState(false);
+  const [addingPreset, setAddingPreset] = useState<string>('');
 
   const sensors = useSensors(
     // マウスは少し動かしてからドラッグ開始（クリックと区別）
@@ -139,6 +152,19 @@ export default function ItemList() {
     ).catch(() => undefined);
   }
 
+  const existingNames = useMemo(() => new Set(items.map((i) => i.name)), [items]);
+
+  /** 定番商品を自分のグループへ登録（写真なし・イラスト付き）。 */
+  async function addPreset(p: ItemInput) {
+    if (!user || !currentGroup) return;
+    setAddingPreset(p.name);
+    try {
+      await createItem(currentGroup.id, user.uid, p);
+    } finally {
+      setAddingPreset('');
+    }
+  }
+
   if (!currentGroup) return null;
 
   return (
@@ -170,6 +196,10 @@ export default function ItemList() {
           ))}
         </div>
       </header>
+
+      <button className="btn-secondary preset-open" onClick={() => setPresetOpen(true)}>
+        <IconPlus /> 定番商品から追加
+      </button>
 
       {loading ? (
         <div className="centered">読み込み中…</div>
@@ -220,6 +250,35 @@ export default function ItemList() {
       <button className="fab" onClick={() => navigate('/items/new')} aria-label="商品を追加">
         <IconPlus />
       </button>
+
+      {presetOpen && (
+        <Sheet title="定番商品から追加" onClose={() => setPresetOpen(false)}>
+          {PRESET_GROUPS.map((g) => (
+            <div key={g.label}>
+              <p className="preset-group-label">{g.label}</p>
+              <div className="preset-grid">
+                {g.items.map((p) => {
+                  const added = existingNames.has(p.name);
+                  return (
+                    <button
+                      key={p.name}
+                      className={`preset-tile${added ? ' added' : ''}`}
+                      disabled={added || addingPreset === p.name}
+                      onClick={() => addPreset(p)}
+                    >
+                      <span className="preset-illust-box">
+                        {p.icon ? <ProductIcon name={p.icon} /> : <PhotoPlaceholder />}
+                      </span>
+                      <span className="preset-name">{p.name}</span>
+                      {added && <span className="preset-added">登録済み</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </Sheet>
+      )}
     </div>
   );
 }
