@@ -840,6 +840,11 @@ textarea {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.note-link {
+  color: var(--primary);
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
 .note-area {
   min-height: 140px;
 }
