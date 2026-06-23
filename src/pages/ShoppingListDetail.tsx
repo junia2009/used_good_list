@@ -95,6 +95,17 @@ export default function ShoppingListDetail() {
     await updateShoppingList(currentGroup.id, list.id, { items });
   }
 
+  /** 個数を増減（1〜99）。購読中の最新リストを書き戻す。 */
+  async function changeQty(itemId: string, delta: number) {
+    if (!currentGroup || !list) return;
+    const items = list.items.map((i) =>
+      i.id === itemId
+        ? { ...i, quantity: Math.max(1, Math.min(99, (i.quantity || 1) + delta)) }
+        : i,
+    );
+    await updateShoppingList(currentGroup.id, list.id, { items });
+  }
+
   async function finishList() {
     if (!currentGroup || !list) return;
     const status = list.status === 'active' ? 'done' : 'active';
@@ -136,13 +147,29 @@ export default function ShoppingListDetail() {
               <Thumb url={it.photoCache} />
               <span className="shop-text">
                 <strong className="shop-name">{it.nameCache || '(名称なし)'}</strong>
-                <span className="shop-sub">
-                  {it.brandCache}
-                  {it.quantity ? ` ・ ${it.quantity}個` : ''}
-                </span>
+                <span className="shop-sub">{it.brandCache}</span>
                 {it.note && <em>メモ: {it.note}</em>}
               </span>
             </label>
+            <div className="qty-stepper sm">
+              <button
+                type="button"
+                onClick={() => changeQty(it.id, -1)}
+                disabled={(it.quantity || 1) <= 1}
+                aria-label="個数を減らす"
+              >
+                −
+              </button>
+              <span className="qty-value">{it.quantity || 1}</span>
+              <button
+                type="button"
+                onClick={() => changeQty(it.id, 1)}
+                disabled={(it.quantity || 1) >= 99}
+                aria-label="個数を増やす"
+              >
+                ＋
+              </button>
+            </div>
           </li>
         ))}
         {list.items.length === 0 && (
