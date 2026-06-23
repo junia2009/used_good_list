@@ -268,6 +268,14 @@ export default function ShoppingListDetail() {
                 削除
               </button>
             </div>
+            <button
+              type="button"
+              className="row-del"
+              onClick={() => removeItem(it.id)}
+              aria-label="リストから削除"
+            >
+              <IconTrash />
+            </button>
           </li>
         ))}
         {list.items.length === 0 && (
