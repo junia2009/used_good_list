@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { getMyGroups } from '../services/groups';
+import { withTimeout } from '../services/realtime';
 import type { Group } from '../types';
 
 interface GroupContextValue {
@@ -48,8 +49,9 @@ export function GroupProvider({ children }: { children: ReactNode }) {
     }
 
     // 2) サーバから最新化（失敗・遅延してもキャッシュ表示は維持）。
+    //    一発取得が再接続中に固まらないようタイムアウトを設ける。
     try {
-      const fresh = await getMyGroups(user.uid, 'server');
+      const fresh = await withTimeout(getMyGroups(user.uid, 'server'));
       setGroups(fresh);
       setError('');
     } catch (e) {

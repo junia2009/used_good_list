@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
 import { deleteItem, updateItem, watchItem } from '../services/items';
+import { subscribeWithTimeout } from '../services/realtime';
 import {
   createShoppingList,
   listShoppingLists,
@@ -26,28 +27,34 @@ export default function ItemDetail() {
   const navigate = useNavigate();
   const [item, setItem] = useState<Item | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [active, setActive] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [msg, setMsg] = useState('');
   const trackRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
 
-  // リアルタイム購読：キャッシュを即時に返すため再接続中でも固まらない
+  // リアルタイム購読：キャッシュを即時に返すため再接続中でも固まらない。
+  // 初回データが届かない時はタイムアウトで再読み込み可能な状態にする。
   useEffect(() => {
     if (!currentGroup || !itemId) return;
     setActive(0);
     setLoaded(false);
-    return watchItem(
-      currentGroup.id,
-      itemId,
+    setLoadError(false);
+    return subscribeWithTimeout<Item | null>(
+      (onData, onError) => watchItem(currentGroup.id, itemId, onData, onError),
       (it) => {
         setItem(it);
         setLoaded(true);
+        setLoadError(false);
       },
-      // エラー時もスピナーは止める（固まらせない）
-      () => setLoaded(true),
+      () => {
+        setLoadError(true);
+        setLoaded(true);
+      },
     );
-  }, [currentGroup, itemId]);
+  }, [currentGroup, itemId, reloadKey]);
 
   // 全画面表示中は背景スクロールを止め、Esc で閉じる
   useEffect(() => {
@@ -83,7 +90,20 @@ export default function ItemDetail() {
         </header>
         <div className="empty">
           <PhotoPlaceholder />
-          <p>この商品は見つかりませんでした。{'\n'}削除された可能性があります。</p>
+          {loadError ? (
+            <>
+              <p>読み込みに失敗しました。{'\n'}電波の良い場所でお試しください。</p>
+              <button
+                className="btn-secondary"
+                style={{ maxWidth: 240, margin: '12px auto 0' }}
+                onClick={() => setReloadKey((k) => k + 1)}
+              >
+                再読み込み
+              </button>
+            </>
+          ) : (
+            <p>この商品は見つかりませんでした。{'\n'}削除された可能性があります。</p>
+          )}
         </div>
       </div>
     );
