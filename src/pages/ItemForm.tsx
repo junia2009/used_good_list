@@ -196,7 +196,13 @@ export default function ItemForm() {
       </label>
       <label className="field">
         メモ
-        <textarea value={form.note ?? ''} onChange={(e) => set('note', e.target.value)} />
+        <textarea
+          className="note-area"
+          rows={6}
+          value={form.note ?? ''}
+          onChange={(e) => set('note', e.target.value)}
+          placeholder="例：詰め替え用が安い。Aスーパーの方が10円安かった。香りはフローラル。"
+        />
       </label>
 
       {error && <p className="error">{error}</p>}
