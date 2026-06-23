@@ -23,15 +23,10 @@ import {
   PhotoPlaceholder,
 } from '../components/icons';
 
-/** 写真サムネ。読み込めない場合はアイコンを表示 */
+/** 写真サムネ。写真が無い／読み込めない場合は何も表示しない（空枠を出さない）。 */
 function Thumb({ url }: { url: string }) {
   const [failed, setFailed] = useState(false);
-  if (!url || failed)
-    return (
-      <span className="shop-photo">
-        <PhotoPlaceholder />
-      </span>
-    );
+  if (!url || failed) return null;
   return (
     <span className="shop-photo">
       <img src={url} alt="" onError={() => setFailed(true)} />
