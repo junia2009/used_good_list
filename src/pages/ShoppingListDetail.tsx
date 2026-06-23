@@ -1,4 +1,10 @@
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
 import {
@@ -23,14 +29,87 @@ import {
   PhotoPlaceholder,
 } from '../components/icons';
 
-/** 写真サムネ。写真が無い／読み込めない場合は何も表示しない（空枠を出さない）。 */
+/** 写真サムネ。読み込めない場合はアイコンを表示 */
 function Thumb({ url }: { url: string }) {
   const [failed, setFailed] = useState(false);
-  if (!url || failed) return null;
+  if (!url || failed)
+    return (
+      <span className="shop-photo">
+        <PhotoPlaceholder />
+      </span>
+    );
   return (
     <span className="shop-photo">
       <img src={url} alt="" onError={() => setFailed(true)} />
     </span>
+  );
+}
+
+const REVEAL = 84;
+
+/**
+ * 左スワイプで背後の「削除」を表示する行。スクロールコンテナを使わず
+ * pointer ドラッグ＋transform で動かすため、iOS のスクロールインジケータの
+ * ゴースト表示が出ない。縦スクロール・ボタンのタップとも干渉しない。
+ */
+function SwipeRow({ onDelete, children }: { onDelete: () => void; children: ReactNode }) {
+  const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const start = useRef<{ x: number; y: number; dx: number } | null>(null);
+  const axis = useRef<'none' | 'h' | 'v'>('none');
+
+  function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
+    start.current = { x: e.clientX, y: e.clientY, dx };
+    axis.current = 'none';
+  }
+  function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
+    if (!start.current) return;
+    const mx = e.clientX - start.current.x;
+    const my = e.clientY - start.current.y;
+    if (axis.current === 'none') {
+      if (Math.abs(mx) < 6 && Math.abs(my) < 6) return;
+      // 横移動が縦より大きければ横スワイプとして確定（縦はページスクロールに任せる）
+      axis.current = Math.abs(mx) > Math.abs(my) ? 'h' : 'v';
+      if (axis.current === 'h') {
+        setDragging(true);
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+      }
+    }
+    if (axis.current === 'h') {
+      setDx(Math.max(-REVEAL, Math.min(0, start.current.dx + mx)));
+    }
+  }
+  function endDrag() {
+    if (axis.current === 'h') setDx((cur) => (cur < -REVEAL / 2 ? -REVEAL : 0));
+    setDragging(false);
+    start.current = null;
+    axis.current = 'none';
+  }
+
+  const open = dx <= -REVEAL / 2;
+
+  return (
+    <div className="swipe-row">
+      <button
+        className="swipe-delete"
+        onClick={onDelete}
+        aria-label="リストから削除"
+        tabIndex={open ? 0 : -1}
+      >
+        <IconTrash />
+        削除
+      </button>
+      <div
+        className="swipe-content"
+        style={{ transform: `translateX(${dx}px)`, transition: dragging ? 'none' : 'transform 0.18s ease' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -216,61 +295,42 @@ export default function ShoppingListDetail() {
       <ul className="shop-items">
         {list.items.map((it) => (
           <li key={it.id} className={it.checked ? 'checked' : ''}>
-            <div className="swipe-track">
-              <div className="swipe-content">
-                <label>
-                  <input
-                    type="checkbox"
-                    className="visually-hidden"
-                    checked={it.checked}
-                    onChange={() => toggle(it.id)}
-                  />
-                  <span className="check">{it.checked && <IconCheck />}</span>
-                  <Thumb url={it.photoCache} />
-                  <span className="shop-text">
-                    <strong className="shop-name">{it.nameCache || '(名称なし)'}</strong>
-                    <span className="shop-sub">{it.brandCache}</span>
-                    {it.note && <em>メモ: {it.note}</em>}
-                  </span>
-                </label>
-                <div className="qty-stepper sm">
-                  <button
-                    type="button"
-                    onClick={() => changeQty(it.id, -1)}
-                    disabled={(it.quantity || 1) <= 1}
-                    aria-label="個数を減らす"
-                  >
-                    −
-                  </button>
-                  <span className="qty-value">{it.quantity || 1}</span>
-                  <button
-                    type="button"
-                    onClick={() => changeQty(it.id, 1)}
-                    disabled={(it.quantity || 1) >= 99}
-                    aria-label="個数を増やす"
-                  >
-                    ＋
-                  </button>
-                </div>
+            <SwipeRow onDelete={() => removeItem(it.id)}>
+              <label>
+                <input
+                  type="checkbox"
+                  className="visually-hidden"
+                  checked={it.checked}
+                  onChange={() => toggle(it.id)}
+                />
+                <span className="check">{it.checked && <IconCheck />}</span>
+                <Thumb url={it.photoCache} />
+                <span className="shop-text">
+                  <strong className="shop-name">{it.nameCache || '(名称なし)'}</strong>
+                  <span className="shop-sub">{it.brandCache}</span>
+                  {it.note && <em>メモ: {it.note}</em>}
+                </span>
+              </label>
+              <div className="qty-stepper sm">
+                <button
+                  type="button"
+                  onClick={() => changeQty(it.id, -1)}
+                  disabled={(it.quantity || 1) <= 1}
+                  aria-label="個数を減らす"
+                >
+                  −
+                </button>
+                <span className="qty-value">{it.quantity || 1}</span>
+                <button
+                  type="button"
+                  onClick={() => changeQty(it.id, 1)}
+                  disabled={(it.quantity || 1) >= 99}
+                  aria-label="個数を増やす"
+                >
+                  ＋
+                </button>
               </div>
-              <button
-                type="button"
-                className="swipe-delete"
-                onClick={() => removeItem(it.id)}
-                aria-label="リストから削除"
-              >
-                <IconTrash />
-                削除
-              </button>
-            </div>
-            <button
-              type="button"
-              className="row-del"
-              onClick={() => removeItem(it.id)}
-              aria-label="リストから削除"
-            >
-              <IconTrash />
-            </button>
+            </SwipeRow>
           </li>
         ))}
         {list.items.length === 0 && (
