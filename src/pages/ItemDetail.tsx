@@ -3,12 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useGroup } from '../contexts/GroupContext';
 import { deleteItem, updateItem, watchItem } from '../services/items';
 import { subscribeWithTimeout } from '../services/realtime';
-import {
-  createShoppingList,
-  listShoppingLists,
-  toShoppingListItem,
-  updateShoppingList,
-} from '../services/shoppingLists';
+import { addItemToActiveList, toShoppingListItem } from '../services/shoppingLists';
 import { useAuth } from '../contexts/AuthContext';
 import type { Item } from '../types';
 import {
@@ -32,6 +27,7 @@ export default function ItemDetail() {
   const [active, setActive] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [msg, setMsg] = useState('');
+  const [msgIsError, setMsgIsError] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
 
@@ -122,18 +118,17 @@ export default function ItemDetail() {
     await updateItem(currentGroup.id, item.id, { inStock: !item.inStock });
   }
 
-  /** 直近の active なお使いリストに追加。なければ新規作成 */
+  /** 現在アクティブなお使いリストに原子的に追加（なければ新規作成）。 */
   async function addToShopping() {
     if (!user || !currentGroup || !item) return;
-    const lists = await listShoppingLists(currentGroup.id);
-    let target = lists.find((l) => l.status === 'active');
-    if (!target) {
-      const id = await createShoppingList(currentGroup.id, user.uid, '買い物リスト');
-      target = { id, title: '買い物リスト', status: 'active', assigneeId: null, items: [], createdBy: user.uid };
+    try {
+      await addItemToActiveList(currentGroup.id, user.uid, toShoppingListItem(item));
+      setMsgIsError(false);
+      setMsg('お使いリストに追加しました');
+    } catch {
+      setMsgIsError(true);
+      setMsg('追加に失敗しました。通信状況をご確認ください。');
     }
-    const items = [...target.items, toShoppingListItem(item)];
-    await updateShoppingList(currentGroup.id, target.id, { items });
-    setMsg('お使いリストに追加しました');
   }
 
   /** スクロール位置から現在の写真インデックスを割り出して同期 */
@@ -222,7 +217,7 @@ export default function ItemDetail() {
         <button className="btn-danger" onClick={handleDelete}>
           <IconTrash /> 削除
         </button>
-        {msg && <p className="success">{msg}</p>}
+        {msg && <p className={msgIsError ? 'error' : 'success'}>{msg}</p>}
       </div>
 
       {viewerOpen && (

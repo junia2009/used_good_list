@@ -1,10 +1,12 @@
 import {
   addDoc,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
   getDoc,
   getDocs,
+  getDocsFromServer,
   onSnapshot,
   orderBy,
   query,
@@ -18,8 +20,12 @@ function listsCol(groupId: string) {
   return collection(db, 'groups', groupId, 'shoppingLists');
 }
 
-export async function listShoppingLists(groupId: string): Promise<ShoppingList[]> {
-  const snap = await getDocs(query(listsCol(groupId), orderBy('createdAt', 'desc')));
+export async function listShoppingLists(
+  groupId: string,
+  source: 'default' | 'server' = 'default',
+): Promise<ShoppingList[]> {
+  const q = query(listsCol(groupId), orderBy('createdAt', 'desc'));
+  const snap = source === 'server' ? await getDocsFromServer(q) : await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ShoppingList, 'id'>) }));
 }
 
@@ -70,6 +76,45 @@ export async function createShoppingList(
     status: 'active',
     assigneeId: null,
     items: [],
+    createdBy,
+    createdAt: serverTimestamp(),
+  });
+  return ref.id;
+}
+
+/**
+ * 商品を「現在アクティブなお使いリスト」に追加する。
+ * 端末間で取りこぼし・二重作成が起きないよう次の2点を担保する：
+ * - アクティブなリストの有無はサーバ最新で判定（古いキャッシュでの誤判定＝
+ *   二重作成を防ぐ。取得失敗時のみキャッシュにフォールバック）
+ * - 既存リストへの追加は arrayUnion で「その1件だけ」を原子的に追記
+ *   （配列まるごと上書きしないので、他端末が同時に足した項目を消さない）
+ * 追加先（既存 or 新規作成）のリスト ID を返す。
+ */
+export async function addItemToActiveList(
+  groupId: string,
+  createdBy: string,
+  listItem: ShoppingListItem,
+): Promise<string> {
+  let lists: ShoppingList[];
+  try {
+    lists = await listShoppingLists(groupId, 'server');
+  } catch {
+    lists = await listShoppingLists(groupId); // オフライン等はキャッシュで代替
+  }
+  const target = lists.find((l) => l.status === 'active');
+  if (target) {
+    await updateDoc(doc(db, 'groups', groupId, 'shoppingLists', target.id), {
+      items: arrayUnion(listItem),
+    });
+    return target.id;
+  }
+  // アクティブなリストが無ければ、最初の1件を含めて新規作成
+  const ref = await addDoc(listsCol(groupId), {
+    title: '買い物リスト',
+    status: 'active',
+    assigneeId: null,
+    items: [listItem],
     createdBy,
     createdAt: serverTimestamp(),
   });
