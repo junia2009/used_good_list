@@ -815,6 +815,33 @@ textarea {
   padding: 13px 16px;
   text-align: right;
   border-bottom: 1px solid var(--border);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* メモは表に入れず、全幅・左寄せ・改行保持の専用カードで表示 */
+.note-card {
+  margin-top: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--sh-sm);
+  padding: 14px 16px;
+}
+.note-label {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.note-body {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.note-area {
+  min-height: 140px;
 }
 .meta dt:last-of-type,
 .meta dd:last-of-type {

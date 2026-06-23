@@ -268,10 +268,16 @@ export default function ItemDetail() {
         {item.category && (<><dt>カテゴリ</dt><dd>{item.category}</dd></>)}
         {item.size && (<><dt>容量・規格</dt><dd>{item.size}</dd></>)}
         {item.store && (<><dt>購入場所</dt><dd>{item.store}</dd></>)}
-        {item.note && (<><dt>メモ</dt><dd>{item.note}</dd></>)}
         <dt>在庫</dt>
         <dd>{item.inStock === false ? '切れ' : 'あり'}</dd>
       </dl>
+
+      {item.note && (
+        <section className="note-card">
+          <h3 className="note-label">メモ</h3>
+          <p className="note-body">{item.note}</p>
+        </section>
+      )}
 
       <div className="detail-actions">
         <div className="qty-row">
