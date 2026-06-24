@@ -40,6 +40,8 @@ export interface Item {
   store?: string;
   size?: string;
   note?: string;
+  /** 商品の参考URL（メーカー公式・購入ページなど）。メモとは別管理 */
+  url?: string;
   jan?: string;
   photos: Photo[];
   inStock?: boolean;

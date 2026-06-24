@@ -40,6 +40,7 @@ export default function ItemForm() {
           store: item.store ?? '',
           size: item.size ?? '',
           note: item.note ?? '',
+          url: item.url ?? '',
         });
         setExistingPhotos(item.photos);
       });
@@ -193,6 +194,16 @@ export default function ItemForm() {
       <label className="field">
         購入場所
         <input value={form.store ?? ''} onChange={(e) => set('store', e.target.value)} />
+      </label>
+      <label className="field">
+        URL
+        <input
+          type="url"
+          inputMode="url"
+          value={form.url ?? ''}
+          onChange={(e) => set('url', e.target.value)}
+          placeholder="例：https://www.kao.co.jp/emal/"
+        />
       </label>
       <label className="field">
         メモ

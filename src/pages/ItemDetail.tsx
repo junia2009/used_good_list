@@ -53,6 +53,12 @@ function Linkified({ text }: { text: string }) {
   return <>{nodes}</>;
 }
 
+/** スキーム省略入力（www.example.com など）でも開けるよう http(s) を補う。 */
+function normalizeUrl(raw: string): string {
+  const url = raw.trim();
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 export default function ItemDetail() {
   const { itemId } = useParams();
   const { user } = useAuth();
@@ -301,6 +307,22 @@ export default function ItemDetail() {
         <dt>在庫</dt>
         <dd>{item.inStock === false ? '切れ' : 'あり'}</dd>
       </dl>
+
+      {item.url && item.url.trim() && (
+        <section className="note-card">
+          <h3 className="note-label">URL</h3>
+          <p className="note-body">
+            <a
+              href={normalizeUrl(item.url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="note-link"
+            >
+              {item.url.trim()}
+            </a>
+          </p>
+        </section>
+      )}
 
       {item.note && (
         <section className="note-card">
