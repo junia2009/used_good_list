@@ -53,7 +53,7 @@ export default function Login() {
           />
         </g>
       </svg>
-      <h1 className="brand">Pacto</h1>
+      <h1 className="brand">Totte</h1>
       <p className="tagline">いつものやつを、家族みんなで。</p>
       <button className="btn-primary" onClick={handleLogin}>
         Google でログイン

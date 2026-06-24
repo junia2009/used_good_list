@@ -1,4 +1,4 @@
-# Pacto — データ設計 / Firestore 構造 v0.1
+# Totte — データ設計 / Firestore 構造 v0.1
 
 Firebase（Firestore + Cloud Storage）前提のデータ設計。
 
@@ -84,7 +84,7 @@ invites/{inviteCode}                 # トップレベル：招待コード
 ## 3. 招待・参加フロー（Cloud Functions なし）
 
 1. メンバーが招待を作成 → `invites/{inviteCode}` を生成（`groupId` と有効期限を保存）。
-2. 招待リンク（例: `https://pacto.app/join?code=XXXX`）を共有。
+2. 招待リンク（例: `https://totte.app/join?code=XXXX`）を共有。
 3. 招待された人がリンクを開きログイン → クライアントが `invites/{code}` を読み取り `groupId` を取得。
 4. クライアントが `groups/{groupId}/members/{uid}` を作成（`inviteCode` を含める）。
 5. セキュリティルールが「本人 uid であること」かつ「その招待コードが実在し groupId が一致」を検証して許可。
