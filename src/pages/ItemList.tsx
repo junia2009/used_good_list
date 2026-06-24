@@ -85,6 +85,9 @@ function SortableCard({ item }: { item: Item }) {
   );
 }
 
+/** 選択中のカテゴリを保持するキー（詳細へ遷移して戻っても絞り込みを維持） */
+const CATEGORY_STORAGE_KEY = 'itemList.category';
+
 export default function ItemList() {
   const { user } = useAuth();
   const { currentGroup } = useGroup();
@@ -94,11 +97,19 @@ export default function ItemList() {
   const [loadError, setLoadError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [keyword, setKeyword] = useState('');
-  const [category, setCategory] = useState('すべて');
+  // 詳細ページから戻ったとき（再マウント）に直前の絞り込みを復元する
+  const [category, setCategory] = useState(
+    () => sessionStorage.getItem(CATEGORY_STORAGE_KEY) ?? 'すべて',
+  );
   const [presetOpen, setPresetOpen] = useState(false);
   const [addingPreset, setAddingPreset] = useState<string>('');
   // グループごとに一度だけ旧カテゴリ移行を試みる
   const migratedRef = useRef<string | null>(null);
+
+  // カテゴリ変更を保存し、次回マウント時の初期値に使う
+  useEffect(() => {
+    sessionStorage.setItem(CATEGORY_STORAGE_KEY, category);
+  }, [category]);
 
   const sensors = useSensors(
     // マウスは少し動かしてからドラッグ開始（クリックと区別）
