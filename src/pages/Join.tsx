@@ -51,7 +51,7 @@ export default function Join() {
   if (!user) {
     return (
       <div className="login-screen">
-        <h1 className="brand">Pacto</h1>
+        <h1 className="brand">Totte</h1>
         <p className="tagline">グループに招待されています</p>
         <p className="muted">招待コード: {code}</p>
         <button className="btn-primary" onClick={handleLogin}>
@@ -64,7 +64,7 @@ export default function Join() {
 
   return (
     <div className="login-screen">
-      <h1 className="brand">Pacto</h1>
+      <h1 className="brand">Totte</h1>
       {status === 'error' ? (
         <>
           <p className="error">参加できませんでした：{error}</p>

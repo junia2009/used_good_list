@@ -32,7 +32,7 @@ export default function Settings() {
     const text = `「${currentGroup.name}」に招待します。このリンクから参加してね:`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Pacto への招待', text, url: inviteUrl });
+        await navigator.share({ title: 'Totte への招待', text, url: inviteUrl });
         return;
       } catch {
         /* キャンセル時は何もしない */
@@ -113,7 +113,7 @@ export default function Settings() {
       </section>
 
       <p className="version">
-        Pacto v{__APP_VERSION__}
+        Totte v{__APP_VERSION__}
         <br />
         {__APP_BUILD_DATE__} ・ {__APP_COMMIT__}
       </p>

@@ -31,9 +31,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Pacto',
-        short_name: 'Pacto',
-        description: 'いつものやつを、みんなで共有',
+        name: 'Totte',
+        short_name: 'Totte',
+        description: 'いつものやつを撮って、家族みんなで共有',
         theme_color: '#c2703d',
         background_color: '#fbf8f3',
         display: 'standalone',
