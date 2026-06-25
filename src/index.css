@@ -57,8 +57,13 @@
 html,
 body {
   margin: 0;
-  background: var(--bg);
   color: var(--text);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(194, 112, 61, 0.07) 1px, transparent 0),
+    radial-gradient(120% 70% at 50% -10%, #fffaf1 0%, var(--bg) 55%);
+  background-size: 22px 22px, 100% 100%;
+  background-attachment: fixed, fixed;
 }
 
 body {
